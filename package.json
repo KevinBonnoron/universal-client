@@ -1,0 +1,66 @@
+{
+  "name": "universal-client",
+  "description": "Universal client for web applications",
+  "version": "0.0.8",
+  "keywords": [
+    "api",
+    "client",
+    "fetch",
+    "websocket",
+    "sse",
+    "universal"
+  ],
+  "author": "Kevin Bonnoron",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "build:analyze": "tsup --metafile && bunx esbuild-visualizer --metadata dist/metafile-*.json --open",
+    "dev": "tsup --watch",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "test:ui": "bun test --watch",
+    "lint": "bunx biome check",
+    "lint:fix": "bunx biome check --write",
+    "format": "bunx biome format --write",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build",
+    "version:patch": "node scripts/version.js patch",
+    "version:minor": "node scripts/version.js minor",
+    "version:major": "node scripts/version.js major",
+    "version:alpha": "node scripts/version.js alpha",
+    "version:beta": "node scripts/version.js beta",
+    "version:rc": "node scripts/version.js rc"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.5",
+    "@types/bun": "latest",
+    "eventsource": "^4.0.0",
+    "tsup": "^8.5.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "axios": {
+      "optional": true
+    },
+    "@better-fetch/fetch": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@kevinbonnoron/universal-client",
+  "version": "0.0.8",
+  "license": "MIT",
+  "exports": "./mod.ts",
+  "importMap": "./import_map.json",
+  "nodeModulesDir": "auto",
+  "publish": {
+    "include": ["src/**/*.ts", "README.md", "LICENSE.md", "import_map.json", "mod.ts"],
+    "exclude": ["**/*.test.ts", "**/*.spec.ts"]
+  }
+}

@@ -1,0 +1,21 @@
+# Bun configuration file
+# https://bun.sh/docs/runtime/bunfig
+
+[test]
+# Coverage configuration
+coverage = false  # Set to true to enable by default
+coverageThreshold = 80  # Minimum coverage percentage
+coverageReporter = ["text", "lcov"]  # Coverage report formats
+coverageDir = "coverage"  # Coverage output directory
+
+# Test execution
+timeout = 5000  # Default timeout per test in ms
+bail = 0  # Exit after N failures (0 = run all tests)
+
+# Preload scripts (if needed)
+# preload = ["./test-setup.ts"]
+
+[install]
+# Install configuration
+frozen = true  # Use frozen lockfile in CI
+production = false  # Install devDependencies
