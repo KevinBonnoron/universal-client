@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "axios": "npm:axios@^1.9.0",
+    "eventsource": "npm:eventsource@^2.0.2",
+    "@better-fetch/fetch": "npm:@better-fetch/fetch@1.1.18"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@kevinbonnoron/universal-client",
+  "description": "Universal client for web applications",
+  "version": "0.0.5",
+  "keywords": ["api", "client", "fetch", "websocket", "sse", "universal"],
+  "author": "Kevin Bonnoron",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "prepublishOnly": "bun run build",
+    "format": "bunx biome format --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/bun": "latest",
+    "eventsource": "^4.0.0",
+    "tsup": "^8.5.0"
+  },
+  "peerDependencies": {
+    "@better-fetch/fetch": "1.1.18",
+    "axios": "^1.9.0",
+    "typescript": "^5.0.0"
+  }
+}
