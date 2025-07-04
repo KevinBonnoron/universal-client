@@ -1,4 +1,4 @@
-export type RestDelegate = {
+export type HttpDelegate = {
   get<T>(url: string): Promise<T>;
   post<T>(url: string, body: unknown): Promise<T>;
   patch<T>(url: string, body: unknown): Promise<T>;
@@ -24,4 +24,4 @@ export interface ServerSentEventDelegate {
   subscribe(event: string, callback: (data: unknown) => void): void;
 }
 
-export type Delegate = RestDelegate | WebSocketDelegate | ServerSentEventDelegate;
+export type Delegate = HttpDelegate | WebSocketDelegate | ServerSentEventDelegate;

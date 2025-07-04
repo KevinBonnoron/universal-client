@@ -1,19 +1,23 @@
-import type { WebSocketDelegate } from '../types';
+import type { WebSocketDelegate } from '../../types';
 
-export interface WebSocketConfig {
+export interface CreateWebSocketDelegateOptions {
   baseURL: string;
   protocols?: string | string[];
   reconnectInterval?: number;
   maxReconnectAttempts?: number;
 }
 
+export type WebSocketDelegateOptions = {
+  type: 'websocket';
+} & CreateWebSocketDelegateOptions;
+
 /**
  * Creates a delegate to handle WebSocket requests.
- * 
+ *
  * @param options - The options to be used in the delegate.
  * @returns A delegate to handle WebSocket requests.
  */
-export function createWebSocketDelegate({ baseURL, protocols, reconnectInterval = 5000, maxReconnectAttempts = 10 }: WebSocketConfig): WebSocketDelegate {
+export function createWebSocketDelegate({ baseURL, protocols, reconnectInterval = 5000, maxReconnectAttempts = 10 }: CreateWebSocketDelegateOptions): WebSocketDelegate {
   let socket: WebSocket | null = null;
   let reconnectTimer: number | null = null;
   let reconnectAttempts = 0;

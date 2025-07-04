@@ -1,17 +1,25 @@
-import { EventSource } from 'eventsource';
-import type { ServerSentEventDelegate } from '../types';
+import type { ServerSentEventDelegate } from '../../types';
 
-export interface CreateServerSentEventConfig {
+export interface CreateServerSentEventDelegateOptions {
   baseURL: string;
 }
 
+export type ServerSentEventDelegateOptions = {
+  type: 'server-sent-event';
+} & CreateServerSentEventDelegateOptions;
+
 /**
  * Creates a delegate to handle Server Sent Events.
- * 
+ *
  * @param options - The options to be used in the delegate.
  * @returns A delegate to handle Server Sent Events.
  */
-export function createServerSentEventDelegate({ baseURL }: CreateServerSentEventConfig): ServerSentEventDelegate {
+export function createServerSentEventDelegate({ baseURL }: CreateServerSentEventDelegateOptions): ServerSentEventDelegate {
+  // Utiliser EventSource natif du navigateur
+  if (typeof EventSource === 'undefined') {
+    throw new Error('EventSource is not available. This delegate only works in browser environments.');
+  }
+
   const eventSource = new EventSource(baseURL);
   const openListeners: Set<(event: Event) => void> = new Set();
   const messageListeners: Set<(data: unknown) => void> = new Set();
