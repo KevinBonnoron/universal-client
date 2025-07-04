@@ -1,20 +1,21 @@
 import { EventSource } from 'eventsource';
-import type { ServerSentEventDelegate } from '../types';
+import type { ServerSentEventDelegate } from '../../types';
 
-export interface CreateServerSentEventConfig {
-  /**
-   * The base URL to be used in the delegate.
-   */
-  baseURL: string | URL;
+export interface CreateServerSentEventDelegateOptions {
+  baseURL: string;
 }
+
+export type ServerSentEventDelegateOptions = {
+  type: 'server-sent-event';
+} & CreateServerSentEventDelegateOptions;
 
 /**
  * Creates a delegate to handle Server Sent Events.
- * 
+ *
  * @param options - The options to be used in the delegate.
  * @returns A delegate to handle Server Sent Events.
  */
-export function createServerSentEventDelegate({ baseURL }: CreateServerSentEventConfig): ServerSentEventDelegate {
+export function createServerSentEventDelegate({ baseURL }: CreateServerSentEventDelegateOptions): ServerSentEventDelegate {
   const eventSource = new EventSource(baseURL);
   const openListeners: Set<(event: Event) => void> = new Set();
   const messageListeners: Set<(data: unknown) => void> = new Set();

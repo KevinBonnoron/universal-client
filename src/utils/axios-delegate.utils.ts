@@ -2,8 +2,13 @@ import type { AxiosInstance, CreateAxiosDefaults } from 'axios';
 import axios from 'axios';
 import type { RestDelegate } from '../types';
 
+type AxiosExtension = (axiosInstance: AxiosInstance) => AxiosInstance;
+
 interface WithAxiosOptions extends CreateAxiosDefaults {
-  extensions?: ((axiosInstance: AxiosInstance) => AxiosInstance)[];
+  /**
+   * The extensions to be used in the axios instance.
+   */
+  extensions?: AxiosExtension[];
 }
 
 /**

@@ -1,21 +1,18 @@
 import { type CreateFetchOption, createFetch } from '@better-fetch/fetch';
-import type { RestDelegate } from '../types';
+import type { HttpDelegate } from '../../../types';
 
-interface CreateBetterFetchOptions extends CreateFetchOption {
-  /**
-   * The base URL to be used in the delegate.
-   */
+export interface CreateBetterFetchDelegateOptions extends CreateFetchOption {
   baseURL: string;
 }
 
 /**
  * Creates a delegate to handle better-fetch requests.
- * 
+ *
  * @param options - The options to be used in the delegate.
  * @returns A delegate to handle better-fetch requests.
  */
-export function createBetterFetchDelegate({ baseURL, ...options }: CreateBetterFetchOptions): RestDelegate {
-  const instance = createFetch({ baseURL, credentials: 'include', ...options });
+export function createBetterFetchDelegate({ baseURL, ...options }: CreateBetterFetchDelegateOptions): HttpDelegate {
+  const instance = createFetch({ baseURL, ...options });
 
   return {
     get<T>(url: string) {

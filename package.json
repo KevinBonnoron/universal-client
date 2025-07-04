@@ -10,14 +10,14 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup",
     "prepublishOnly": "bun run build",
     "format": "bunx biome format --write"
   },
@@ -30,6 +30,18 @@
   "peerDependencies": {
     "@better-fetch/fetch": "1.1.18",
     "axios": "^1.9.0",
+    "eventsource": "^4.0.0",
     "typescript": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "axios": {
+      "optional": true
+    },
+    "eventsource": {
+      "optional": true
+    },
+    "@better-fetch/fetch": {
+      "optional": true
+    }
   }
 }
