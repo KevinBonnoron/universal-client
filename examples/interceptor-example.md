@@ -21,12 +21,10 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      before: (context) => {
-        // Add API version prefix to all requests
-        return { url: `/api/v1${context.url}` };
-      }
+    name: 'apiPrefix',
+    before: (context) => {
+      // Add API version prefix to all requests
+      return { url: `/api/v1${context.url}` };
     }
   }),
   withMethods(({ delegate }) => ({
@@ -47,17 +45,15 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      before: (context) => {
-        const token = localStorage.getItem('authToken');
-        return {
-          headers: {
-            ...context.headers,
-            Authorization: `Bearer ${token}`
-          }
-        };
-      }
+    name: 'auth',
+    before: (context) => {
+      const token = localStorage.getItem('authToken');
+      return {
+        headers: {
+          ...context.headers,
+          Authorization: `Bearer ${token}`
+        }
+      };
     }
   }),
   withMethods(({ delegate }) => ({
@@ -85,34 +81,32 @@ interface User {
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      after: <T>(context) => {
-        const result = context.result as any;
+    name: 'dateConverter',
+    after: <T>(context) => {
+      const result = context.result as any;
 
-        // Convert ISO date strings to Date objects
-        const convertDates = (obj: any): any => {
-          if (!obj || typeof obj !== 'object') return obj;
+      // Convert ISO date strings to Date objects
+      const convertDates = (obj: any): any => {
+        if (!obj || typeof obj !== 'object') return obj;
 
-          if (Array.isArray(obj)) {
-            return obj.map(convertDates);
+        if (Array.isArray(obj)) {
+          return obj.map(convertDates);
+        }
+
+        const converted: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+            converted[key] = new Date(value);
+          } else if (typeof value === 'object') {
+            converted[key] = convertDates(value);
+          } else {
+            converted[key] = value;
           }
+        }
+        return converted;
+      };
 
-          const converted: any = {};
-          for (const [key, value] of Object.entries(obj)) {
-            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-              converted[key] = new Date(value);
-            } else if (typeof value === 'object') {
-              converted[key] = convertDates(value);
-            } else {
-              converted[key] = value;
-            }
-          }
-          return converted;
-        };
-
-        return convertDates(result) as T;
-      }
+      return convertDates(result) as T;
     }
   }),
   withMethods(({ delegate }) => ({
@@ -133,19 +127,17 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      before: (context) => {
-        // Add timestamp to all POST/PUT/PATCH requests
-        if (context.method !== 'get' && context.method !== 'delete') {
-          return {
-            body: {
-              ...(context.body as object),
-              timestamp: new Date().toISOString(),
-              requestId: crypto.randomUUID()
-            }
-          };
-        }
+    name: 'requestEnricher',
+    before: (context) => {
+      // Add timestamp to all POST/PUT/PATCH requests
+      if (context.method !== 'get' && context.method !== 'delete') {
+        return {
+          body: {
+            ...(context.body as object),
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID()
+          }
+        };
       }
     }
   }),
@@ -169,17 +161,15 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      error: (method, url, error) => {
-        // Log to error tracking service
-        console.error(`[${method.toUpperCase()}] ${url} failed:`, error);
+    name: 'errorLogger',
+    error: (method, url, error) => {
+      // Log to error tracking service
+      console.error(`[${method.toUpperCase()}] ${url} failed:`, error);
 
-        // Send to external service
-        // Sentry.captureException(error, {
-        //   tags: { method, url }
-        // });
-      }
+      // Send to external service
+      // Sentry.captureException(error, {
+      //   tags: { method, url }
+      // });
     }
   }),
   withMethods(({ delegate }) => ({
@@ -204,15 +194,13 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      before: (context) => {
-        console.log(`→ [${context.method.toUpperCase()}] ${context.url}`, context.body);
-      },
-      after: (context) => {
-        console.log(`← [${context.method.toUpperCase()}] ${context.url}`, context.result);
-        return context.result;
-      }
+    name: 'logger',
+    before: (context) => {
+      console.log(`→ [${context.method.toUpperCase()}] ${context.url}`, context.body);
+    },
+    after: (context) => {
+      console.log(`← [${context.method.toUpperCase()}] ${context.url}`, context.result);
+      return context.result;
     }
   }),
   withMethods(({ delegate }) => ({
@@ -237,32 +225,26 @@ const client = universalClient(
 
   // Authentication interceptor
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      before: (context) => ({
-        headers: {
-          ...context.headers,
-          Authorization: `Bearer ${getToken()}`
-        }
-      })
-    }
+    name: 'auth',
+    before: (context) => ({
+      headers: {
+        ...context.headers,
+        Authorization: `Bearer ${getToken()}`
+      }
+    })
   }),
 
   // Date conversion interceptor
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      after: (context) => convertDatesToObjects(context.result)
-    }
+    name: 'dateConverter',
+    after: (context) => convertDatesToObjects(context.result)
   }),
 
   // Error logging interceptor
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      error: (method, url, error) => {
-        logError(method, url, error);
-      }
+    name: 'log',
+    error: (method, url, error) => {
+      logError(method, url, error);
     }
   }),
 
@@ -335,47 +317,41 @@ const apiClient = universalClient(
 
   // Authentication interceptor
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      before: (context: RequestInterceptorContext) => {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          return {
-            headers: {
-              ...context.headers,
-              Authorization: `Bearer ${token}`,
-              'X-Request-ID': crypto.randomUUID()
-            }
-          };
-        }
+    name: 'auth',
+    before: (context: RequestInterceptorContext) => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        return {
+          headers: {
+            ...context.headers,
+            Authorization: `Bearer ${token}`,
+            'X-Request-ID': crypto.randomUUID()
+          }
+        };
       }
-    }
+    },
   }),
 
   // Response transformation interceptor
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      after: <T>(context: ResponseInterceptorContext<T>) => {
-        return convertISODatesToObjects(context.result);
-      }
+    name: 'dateConverter',
+    after: <T>(context: ResponseInterceptorContext<T>) => {
+      return convertISODatesToObjects(context.result);
     }
   }),
 
   // Error handling interceptor
   withInterceptor({
-    name: 'delegate',
-    interceptor: {
-      error: (method, url, error) => {
-        if (error.message.includes('401')) {
-          // Clear auth and redirect to login
-          localStorage.removeItem('authToken');
-          window.location.href = '/login';
-        }
-
-        // Log to monitoring service
-        console.error(`API Error [${method.toUpperCase()}] ${url}:`, error);
+    name: 'errorHandler',
+    error: (method, url, error) => {
+      if (error.message.includes('401')) {
+        // Clear auth and redirect to login
+        localStorage.removeItem('authToken');
+        window.location.href = '/login';
       }
+
+      // Log to monitoring service
+      console.error(`API Error [${method.toUpperCase()}] ${url}:`, error);
     }
   }),
 

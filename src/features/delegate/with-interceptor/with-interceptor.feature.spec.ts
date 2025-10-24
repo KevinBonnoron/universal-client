@@ -18,12 +18,9 @@ describe('withInterceptor', () => {
     const client = universalClient(
       () => ({ delegate: mockDelegate }),
       withInterceptor({
-        name: 'delegate',
-        interceptor: {
-          before: (context: RequestInterceptorContext) => {
-            // Add API prefix
-            return { url: `/api${context.url}` };
-          },
+        name: 'apiPrefix',
+        before: (context: RequestInterceptorContext) => {
+          return { url: `/api${context.url}` };
         },
       }),
       withMethods(({ delegate }) => ({
@@ -50,17 +47,14 @@ describe('withInterceptor', () => {
     const client = universalClient(
       () => ({ delegate: mockDelegate }),
       withInterceptor({
-        name: 'delegate',
-        interceptor: {
-          before: (context: RequestInterceptorContext) => {
-            // Add timestamp to body
-            return {
-              body: {
-                ...(context.body as object),
-                timestamp: Date.now(),
-              },
-            };
-          },
+        name: 'requestEnricher',
+        before: (context: RequestInterceptorContext) => {
+          return {
+            body: {
+              ...(context.body as object),
+              timestamp: Date.now(),
+            },
+          };
         },
       }),
       withMethods(({ delegate }) => ({
@@ -90,19 +84,16 @@ describe('withInterceptor', () => {
     const client = universalClient(
       () => ({ delegate: mockDelegate }),
       withInterceptor({
-        name: 'delegate',
-        interceptor: {
-          after: <T>(context: ResponseInterceptorContext<T>) => {
-            // Convert ISO date strings to Date objects
-            const result = context.result as Record<string, unknown>;
-            if (result.createdAt && typeof result.createdAt === 'string') {
-              return {
-                ...result,
-                createdAt: new Date(result.createdAt),
-              } as T;
-            }
-            return context.result;
-          },
+        name: 'dateConverter',
+        after: <T>(context: ResponseInterceptorContext<T>) => {
+          const result = context.result as Record<string, unknown>;
+          if (result.createdAt && typeof result.createdAt === 'string') {
+            return {
+              ...result,
+              createdAt: new Date(result.createdAt),
+            } as T;
+          }
+          return context.result;
         },
       }),
       withMethods(({ delegate }) => ({
@@ -130,11 +121,9 @@ describe('withInterceptor', () => {
     const client = universalClient(
       () => ({ delegate: mockDelegate }),
       withInterceptor({
-        name: 'delegate',
-        interceptor: {
-          error: (method: string, url: string, error: Error, _body?: unknown) => {
-            errorHandler(method, url, error.message);
-          },
+        name: 'errorLogger',
+        error: (method: string, url: string, error: Error, _body?: unknown) => {
+          errorHandler(method, url, error.message);
         },
       }),
       withMethods(({ delegate }) => ({
@@ -158,17 +147,15 @@ describe('withInterceptor', () => {
     const client = universalClient(
       () => ({ delegate: mockDelegate }),
       withInterceptor({
-        name: 'delegate',
-        interceptor: {
-          before: (context: RequestInterceptorContext) => {
-            return { url: `/v1${context.url}` };
-          },
-          after: <T>(context: ResponseInterceptorContext<T>) => {
-            return {
-              ...context.result,
-              intercepted: true,
-            } as T;
-          },
+        name: 'apiVersion',
+        before: (context: RequestInterceptorContext) => {
+          return { url: `/v1${context.url}` };
+        },
+        after: <T>(context: ResponseInterceptorContext<T>) => {
+          return {
+            ...context.result,
+            intercepted: true,
+          } as T;
         },
       }),
       withMethods(({ delegate }) => ({
@@ -198,13 +185,76 @@ describe('withInterceptor', () => {
     const client = universalClient(
       () => ({ delegate: mockDelegate }),
       withInterceptor({
-        name: 'delegate',
-        interceptor: {
-          before: () => ({ url: '/modified' }),
-        },
+        name: 'urlModifier',
+        before: () => ({ url: '/modified' }),
       }),
     );
 
     expect(client.delegate).toBe(mockDelegate);
+  });
+
+  it('should handle PUT method correctly with interceptors', async () => {
+    const putMock = mock(async (url: string, body: unknown) => ({ url, body, method: 'PUT' }));
+    const mockDelegate = {
+      get: mock(async () => ({})),
+      post: mock(async () => ({})),
+      patch: mock(async () => ({})),
+      put: putMock,
+      delete: mock(async () => ({})),
+    } as HttpDelegate;
+
+    const client = universalClient(
+      () => ({ delegate: mockDelegate }),
+      withInterceptor({
+        name: 'interceptor',
+        before: () => {
+          return {};
+        },
+      }),
+      withMethods(({ delegate }) => ({
+        updateUser: (id: number, data: unknown) => (delegate as HttpDelegate).put(`/users/${id}`, data),
+      })),
+    );
+
+    const testData = { name: 'John Updated', age: 31 };
+    const result = await client.updateUser(1, testData);
+
+    expect(putMock).toHaveBeenCalledWith('/users/1', testData, undefined);
+    // @ts-expect-error - result has url and body properties from mock
+    expect(result.url).toBe('/users/1');
+    // @ts-expect-error - result has url and body properties from mock
+    expect(result.body).toEqual(testData);
+  });
+
+  it('should handle complex PUT requests with nested objects', async () => {
+    const mockDelegate = {
+      get: mock(async () => ({})),
+      post: mock(async () => ({})),
+      patch: mock(async () => ({})),
+      put: mock(async (url: string, body: unknown) => ({ url, body, method: 'PUT' })),
+      delete: mock(async () => ({})),
+    } as HttpDelegate;
+
+    const client = universalClient(
+      () => ({ delegate: mockDelegate }),
+      withMethods(({ delegate }) => ({
+        updateUser: (id: number, data: unknown) => (delegate as HttpDelegate).put(`/users/${id}`, data),
+      })),
+    );
+
+    const complexData = {
+      user: { name: 'John', age: 30 },
+      metadata: { source: 'web', timestamp: '2024-01-01T00:00:00Z' },
+      tags: ['admin', 'verified'],
+      settings: { notifications: true, theme: 'dark' },
+    };
+
+    const result = await client.updateUser(1, complexData);
+
+    expect(mockDelegate.put).toHaveBeenCalledWith('/users/1', complexData);
+    // @ts-expect-error - result has url property from mock
+    expect(result.url).toBe('/users/1');
+    // @ts-expect-error - result has body property from mock
+    expect(result.body).toEqual(complexData);
   });
 });

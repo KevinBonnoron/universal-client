@@ -4,15 +4,13 @@ const withHttpDelegate = (baseURL: string) =>
   withDelegate(
     { type: 'http', impl: 'fetch', baseURL },
     withInterceptor({
-      interceptor: {
-        before: (context) => {
-          return {
-            ...context,
-            headers: {
-              ContentType: 'text/plain',
-            },
-          };
-        },
+      before: (context) => {
+        return {
+          ...context,
+          headers: {
+            ContentType: 'text/plain',
+          },
+        };
       },
     }),
   );

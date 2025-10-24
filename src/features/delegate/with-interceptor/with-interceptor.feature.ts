@@ -2,9 +2,8 @@ import type { DelegateFeature } from '../../../types';
 import { isHttpDelegate, wrapHttpDelegate } from '../../../utils';
 import type { HttpInterceptor } from '../../../utils/delegate-middleware.utils';
 
-export interface InterceptorConfig {
+export interface InterceptorConfig extends HttpInterceptor {
   name?: string;
-  interceptor: HttpInterceptor;
 }
 
 /**
@@ -15,7 +14,7 @@ export interface InterceptorConfig {
  */
 export function withInterceptor(config: InterceptorConfig): DelegateFeature {
   return ({ delegate, ...rest }) => {
-    const { interceptor } = config;
+    const { name: _name, ...interceptor } = config;
 
     if (isHttpDelegate(delegate)) {
       return {

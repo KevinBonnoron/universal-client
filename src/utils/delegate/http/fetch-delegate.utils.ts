@@ -67,7 +67,7 @@ export function createFetchDelegate({ baseURL, format = 'json' }: CreateFetchDel
         query.append(key, value);
       }
 
-      return fetch(`${baseURL}${url}${params}`, {
+      return fetch(`${baseURL}${url}${query.size ? `?${query}` : ''}`, {
         method: 'PUT',
         body: JSON.stringify(body),
         headers: {
