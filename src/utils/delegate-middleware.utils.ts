@@ -16,16 +16,15 @@ export interface RequestInterceptorContext {
 export interface ResponseInterceptorContext<T = unknown> {
   method: string;
   url: string;
-  result: T;
-  body?: unknown;
+  response: T;
 }
 
 /**
  * Interceptor for HTTP delegate methods
  */
 export interface HttpInterceptor {
-  before?: (context: RequestInterceptorContext) => undefined | Partial<RequestInterceptorContext> | Promise<undefined | Partial<RequestInterceptorContext>>;
-  after?: <T>(context: ResponseInterceptorContext<T>) => T | Promise<T>;
+  before?: (context: RequestInterceptorContext) => undefined | Partial<RequestInterceptorContext> | Promise<Partial<RequestInterceptorContext> | undefined>;
+  after?: <T>(context: ResponseInterceptorContext<T>) => undefined | Partial<T> | Promise<Partial<T> | undefined>;
   error?: (method: string, url: string, error: Error, body?: unknown) => void | Promise<void>;
 }
 
@@ -55,15 +54,8 @@ export function wrapHttpDelegate(delegate: HttpDelegate, interceptor: HttpInterc
       const body = isGetOrDelete ? undefined : bodyOrOptions;
       const options = isGetOrDelete ? (bodyOrOptions as { headers?: Record<string, string> }) : (optionsArg as { headers?: Record<string, string> });
 
-      let context: RequestInterceptorContext = {
-        method: methodName,
-        url,
-        headers: options?.headers,
-        body,
-      };
-
+      let context: RequestInterceptorContext = { method: methodName, url, headers: options?.headers ?? {}, body };
       try {
-        // Before interceptor (can modify url, headers, body)
         if (interceptor.before) {
           const beforeResult = await interceptor.before(context);
           if (beforeResult && typeof beforeResult === 'object') {
@@ -71,30 +63,25 @@ export function wrapHttpDelegate(delegate: HttpDelegate, interceptor: HttpInterc
           }
         }
 
-        // Build options with potentially modified headers
         const finalOptions = context.headers ? { headers: context.headers } : undefined;
-
-        // Execute original method with potentially modified properties
-        const result = isGetOrDelete
+        let response = isGetOrDelete
           ? await (originalMethod as (url: string, options?: { headers?: Record<string, string> }) => Promise<T>)(context.url, finalOptions)
           : await (originalMethod as (url: string, body: unknown, options?: { headers?: Record<string, string> }) => Promise<T>)(context.url, context.body, finalOptions);
 
         // After interceptor
         if (interceptor.after) {
-          return await interceptor.after<T>({
-            method: methodName,
-            url: context.url,
-            result: result as T,
-            body: context.body,
-          });
+          const afterResult = await interceptor.after<T>({ method: methodName, url: context.url, response });
+          if (afterResult && typeof afterResult === 'object') {
+            response = { ...response, ...afterResult };
+          }
         }
 
-        return result as T;
+        return response;
       } catch (error) {
-        // Error interceptor
         if (interceptor.error) {
           await interceptor.error(methodName, context.url, error as Error, context.body);
         }
+
         throw error;
       }
     };
