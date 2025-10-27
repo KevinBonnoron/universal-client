@@ -1,7 +1,7 @@
 {
   "name": "universal-client",
   "description": "Universal client for web applications",
-  "version": "0.0.9-rc.2",
+  "version": "0.0.9-rc.3",
   "keywords": [
     "api",
     "client",
