@@ -1,5 +1,5 @@
 import type { Delegate, DelegateFeature, WebSocketDelegate } from '../../../types';
-import { isHttpDelegate, isWebSocketDelegate, wrapHttpDelegate } from '../../../utils';
+import { type HttpInterceptor, isHttpDelegate, isWebSocketDelegate, type ResponseInterceptorContext, wrapHttpDelegate } from '../../../utils';
 
 interface TelemetryEvent {
   timestamp: number;
@@ -118,7 +118,7 @@ function createTelemetryCollector({ enableMetrics = false, enableTracing = false
   };
 }
 
-function createTelemetryHttpInterceptor(collector: TelemetryCollector) {
+function createTelemetryHttpInterceptor(collector: TelemetryCollector): HttpInterceptor {
   const startTimes = new Map<string, { time: number; traceId: string | undefined }>();
 
   return {
@@ -138,7 +138,7 @@ function createTelemetryHttpInterceptor(collector: TelemetryCollector) {
 
       return undefined;
     },
-    after: <T>(context: { method: string; url: string; result: T }) => {
+    after: <T>(context: ResponseInterceptorContext<T>) => {
       const operation = `${context.method.toUpperCase()} ${context.url}`;
       const startData = startTimes.get(operation);
 
@@ -157,7 +157,7 @@ function createTelemetryHttpInterceptor(collector: TelemetryCollector) {
         startTimes.delete(operation);
       }
 
-      return context.result;
+      return context.response;
     },
     error: (method: string, url: string, error: Error) => {
       const operation = `${method.toUpperCase()} ${url}`;
@@ -178,7 +178,7 @@ function createTelemetryHttpInterceptor(collector: TelemetryCollector) {
         startTimes.delete(operation);
       }
     },
-  };
+  } as HttpInterceptor;
 }
 
 function wrapWebSocketDelegateWithTelemetry(delegate: WebSocketDelegate, collector: TelemetryCollector): WebSocketDelegate {

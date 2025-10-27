@@ -30,7 +30,7 @@ Coverage reports are generated in `coverage/` directory (lcov and text formats).
 bun run lint         # Check code with Biome
 bun run lint:fix     # Fix linting issues
 bun run format       # Format code
-bun run typecheck    # TypeScript type checking
+bun run type-check    # TypeScript type checking
 ```
 Uses Biome for linting and formatting. Configuration in `biome.json`:
 - Tabs for indentation (default), spaces for JS/JSON
@@ -51,7 +51,7 @@ Uses tsup to build both CJS and ESM formats with:
 - Banner with version/license info
 
 ### CI/CD
-- **Pull Requests**: Automatically run tests (with coverage), lint, typecheck, build, and post bundle sizes
+- **Pull Requests**: Automatically run tests (with coverage), lint, type-check, build, and post bundle sizes
 - **Main branch**: Full test suite with coverage upload, then publishes to npm and JSR if all checks pass
 - **Coverage**: Uploaded to Codecov (if CODECOV_TOKEN configured)
 

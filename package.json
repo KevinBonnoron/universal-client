@@ -37,7 +37,7 @@
     "lint": "bunx biome check",
     "lint:fix": "bunx biome check --write",
     "format": "bunx biome format --write",
-    "typecheck": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "prepublishOnly": "bun run build",
     "version:patch": "node scripts/version.js patch",
     "version:minor": "node scripts/version.js minor",
@@ -48,8 +48,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@types/bun": "latest",
     "eventsource": "^4.0.0",
+    "lefthook": "^2.0.1",
     "tsup": "^8.5.0"
   },
   "peerDependencies": {
