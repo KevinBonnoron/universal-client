@@ -1,6 +1,6 @@
 {
   "name": "@kevinbonnoron/universal-client",
-  "version": "0.0.9-rc.3",
+  "version": "0.0.9-rc.4",
   "license": "MIT",
   "exports": "./mod.ts",
   "importMap": "./import_map.json",
