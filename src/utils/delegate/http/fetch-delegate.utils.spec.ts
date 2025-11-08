@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { createFetchDelegate } from './fetch-delegate.utils';
 
-// Mock fetch globally
 const mockFetch = mock();
 global.fetch = mockFetch as unknown as typeof fetch;
 
@@ -14,276 +13,271 @@ describe('createFetchDelegate', () => {
     mockFetch.mockClear();
   });
 
-  describe('PUT method', () => {
-    it('should send PUT request with correct URL and body', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
+  describe('GET', () => {
+    const baseURL = 'https://api.example.com';
+    const url = '/users/1';
+
+    it('should send request with correct URL', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
+      const delegate = createFetchDelegate({ baseURL });
+      await delegate.get(url);
 
-      const testData = { name: 'John', age: 30 };
-      await delegate.put('/users/1', testData);
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1', {
-        method: 'PUT',
-        body: JSON.stringify(testData),
+      expect(mockFetch).toHaveBeenCalledWith(`${baseURL}${url}`, {
         headers: {},
       });
     });
 
-    it('should not concatenate body to URL', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
+    it('should handle options', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
-
-      const testData = { name: 'John', age: 30 };
-      await delegate.put('/users/1', testData);
-
-      // Vérifier que l'URL ne contient pas le body
-      const call = mockFetch.mock.calls[0];
-      const url = call[0];
-      const options = call[1];
-
-      expect(url).toBe('https://api.example.com/users/1');
-      expect(url).not.toContain('John');
-      expect(url).not.toContain('30');
-      expect(options.body).toBe(JSON.stringify(testData));
-    });
-
-    it('should handle PUT with params correctly', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
-
-      const testData = { name: 'John' };
+      const delegate = createFetchDelegate({ baseURL });
       const params = { include: 'profile', format: 'json' };
+      const headers = { 'Content-Type': 'application/json' };
 
-      await delegate.put('/users/1', testData, { params });
+      await delegate.get(url, { params, headers });
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1?include=profile&format=json', {
-        method: 'PUT',
-        body: JSON.stringify(testData),
+      const fetchUrl = mockFetch.mock.calls[0][0] as string;
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+
+      expect(fetchUrl).toBe(`${baseURL}${url}?include=profile&format=json`);
+      expect(options.headers).toEqual(headers);
+    });
+
+    it('should throw error on failed request', async () => {
+      const mockResponse = new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+
+      await expect(delegate.get(url)).rejects.toThrow('Not found');
+    });
+  });
+
+  describe('DELETE', () => {
+    const baseURL = 'https://api.example.com';
+    const url = '/users/1';
+
+    it('should send request with correct URL', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      await delegate.delete(url);
+
+      expect(mockFetch).toHaveBeenCalledWith(`${baseURL}${url}`, {
+        method: 'DELETE',
         headers: {},
       });
     });
 
-    it('should handle PUT with headers correctly', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
+    it('should handle options', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
-
-      const testData = { name: 'John' };
-      const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer token' };
-
-      await delegate.put('/users/1', testData, { headers });
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1', {
-        method: 'PUT',
-        body: JSON.stringify(testData),
-        headers,
-      });
-    });
-
-    it('should handle PUT with both params and headers', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
-
-      const testData = { name: 'John' };
+      const delegate = createFetchDelegate({ baseURL });
       const params = { include: 'profile' };
       const headers = { 'Content-Type': 'application/json' };
 
-      await delegate.put('/users/1', testData, { params, headers });
+      await delegate.delete(url, { params, headers });
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1?include=profile', {
-        method: 'PUT',
-        body: JSON.stringify(testData),
-        headers,
-      });
+      const fetchUrl = mockFetch.mock.calls[0][0] as string;
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+
+      expect(fetchUrl).toBe(`${baseURL}${url}?include=profile`);
+      expect(options.headers).toEqual(headers);
     });
 
-    it('should handle complex body objects correctly', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
+    it('should throw error on failed request', async () => {
+      const mockResponse = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
+      const delegate = createFetchDelegate({ baseURL });
 
-      const complexData = {
-        user: { name: 'John', age: 30 },
-        metadata: { source: 'web', timestamp: '2024-01-01T00:00:00Z' },
-        tags: ['admin', 'verified'],
-      };
-
-      await delegate.put('/users/1', complexData);
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1', {
-        method: 'PUT',
-        body: JSON.stringify(complexData),
-        headers: {},
-      });
+      await expect(delegate.delete(url)).rejects.toThrow('Unauthorized');
     });
   });
 
-  describe('POST method', () => {
-    it('should send POST request with correct URL and body', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
+  describe.each([
+    { method: 'post' as const, httpMethod: 'POST', url: '/users' },
+    { method: 'put' as const, httpMethod: 'PUT', url: '/users/1' },
+    { method: 'patch' as const, httpMethod: 'PATCH', url: '/users/1' },
+  ])('$httpMethod', ({ method, httpMethod, url }) => {
+    const baseURL = 'https://api.example.com';
+
+    it.each([
+      { label: 'simple object', data: { name: 'John', age: 30 } },
+      {
+        label: 'complex nested object',
+        data: {
+          user: { name: 'John', age: 30 },
+          metadata: { source: 'web', timestamp: '2024-01-01T00:00:00Z' },
+          tags: ['admin', 'verified'],
+        },
+      },
+    ])('should send $label in body', async ({ data }) => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
+      const delegate = createFetchDelegate({ baseURL });
+      await delegate[method](url, data);
 
-      const testData = { name: 'John', age: 30 };
-      await delegate.post('/users', testData);
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users', {
-        method: 'POST',
-        body: JSON.stringify(testData),
+      expect(mockFetch).toHaveBeenCalledWith(`${baseURL}${url}`, {
+        method: httpMethod,
+        body: JSON.stringify(data),
         headers: {},
       });
+    });
+
+    it('should handle options', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      const params = { include: 'profile', format: 'json' };
+      const headers = { 'Content-Type': 'application/json' };
+      const testData = { name: 'John' };
+
+      await delegate[method](url, testData, { params, headers });
+
+      const fetchUrl = mockFetch.mock.calls[0][0] as string;
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+
+      expect(fetchUrl).toBe(`${baseURL}${url}?include=profile&format=json`);
+      expect(options.headers).toEqual(headers);
+    });
+
+    it('should throw error on failed request', async () => {
+      const mockResponse = new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      const testData = { name: 'John' };
+
+      await expect(delegate[method](url, testData)).rejects.toThrow('Forbidden');
     });
   });
 
-  describe('PATCH method', () => {
-    it('should send PATCH request with correct URL and body', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
-      mockFetch.mockResolvedValue(mockResponse);
+  describe('Error handling (common)', () => {
+    const baseURL = 'https://api.example.com';
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
+    describe('error message extraction', () => {
+      it.each([
+        { field: 'error', value: 'Custom error message', expected: 'Custom error message' },
+        { field: 'message', value: 'Validation failed', expected: 'Validation failed' },
+      ])('should extract error from errorData.$field', async ({ field, value, expected }) => {
+        const mockResponse = new Response(JSON.stringify({ [field]: value }), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const delegate = createFetchDelegate({ baseURL });
+
+        await expect(delegate.get('/users')).rejects.toThrow(expected);
       });
 
-      const testData = { name: 'John Updated' };
-      await delegate.patch('/users/1', testData);
+      it('should fallback to default message when no error/message field', async () => {
+        const mockResponse = new Response(JSON.stringify({ some: 'data' }), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+        mockFetch.mockResolvedValue(mockResponse);
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1', {
-        method: 'PATCH',
-        body: JSON.stringify(testData),
-        headers: {},
-      });
-    });
-  });
+        const delegate = createFetchDelegate({ baseURL });
 
-  describe('GET method', () => {
-    it('should send GET request with correct URL', async () => {
-      const mockResponse = { json: () => Promise.resolve({ id: 1, name: 'John' }) };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
+        await expect(delegate.get('/users')).rejects.toThrow('HTTP 400: Bad Request');
       });
 
-      await delegate.get('/users/1');
+      it('should prioritize error field over message field', async () => {
+        const mockResponse = new Response(JSON.stringify({ error: 'Error field', message: 'Message field' }), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+        mockFetch.mockResolvedValue(mockResponse);
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1', {
-        headers: {},
-      });
-    });
+        const delegate = createFetchDelegate({ baseURL });
 
-    it('should handle GET with params', async () => {
-      const mockResponse = { json: () => Promise.resolve({ users: [] }) };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
-
-      const params = { page: '1', limit: '10' };
-      await delegate.get('/users', { params });
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users?page=1&limit=10', {
-        headers: {},
+        await expect(delegate.get('/users')).rejects.toThrow('Error field');
       });
     });
-  });
 
-  describe('DELETE method', () => {
-    it('should send DELETE request with correct URL', async () => {
-      const mockResponse = { json: () => Promise.resolve({ success: true }) };
-      mockFetch.mockResolvedValue(mockResponse);
+    describe('HTTP status codes', () => {
+      it.each([
+        { status: 400, statusText: 'Bad Request' },
+        { status: 401, statusText: 'Unauthorized' },
+        { status: 403, statusText: 'Forbidden' },
+        { status: 404, statusText: 'Not Found' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+        { status: 500, statusText: 'Internal Server Error' },
+        { status: 502, statusText: 'Bad Gateway' },
+        { status: 503, statusText: 'Service Unavailable' },
+      ])('should throw correct error for HTTP $status', async ({ status, statusText }) => {
+        const mockResponse = new Response('Not JSON', { status, statusText });
+        mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
+        const delegate = createFetchDelegate({ baseURL });
+
+        await expect(delegate.get('/users')).rejects.toThrow(`HTTP ${status}: ${statusText}`);
+      });
+    });
+
+    describe('non-JSON response bodies', () => {
+      it('should handle plain text error response', async () => {
+        const mockResponse = new Response('Plain text error', {
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const delegate = createFetchDelegate({ baseURL });
+
+        await expect(delegate.get('/users')).rejects.toThrow('HTTP 500: Internal Server Error');
       });
 
-      await delegate.delete('/users/1');
+      it('should handle empty error response', async () => {
+        const mockResponse = new Response('', { status: 500, statusText: 'Internal Server Error' });
+        mockFetch.mockResolvedValue(mockResponse);
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/users/1', {
-        method: 'DELETE',
-        headers: {},
+        const delegate = createFetchDelegate({ baseURL });
+
+        await expect(delegate.get('/users')).rejects.toThrow('HTTP 500: Internal Server Error');
+      });
+    });
+
+    describe('with different response formats', () => {
+      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'raw' as const }, { format: undefined }])('should throw error with format=$format', async ({ format }) => {
+        const mockResponse = new Response(JSON.stringify({ error: 'Server error' }), {
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const delegate = createFetchDelegate({ baseURL, format });
+
+        await expect(delegate.get('/users')).rejects.toThrow('Server error');
       });
     });
   });
 
   describe('Response parsing', () => {
-    it('should parse JSON response by default', async () => {
-      const mockData = { id: 1, name: 'John' };
-      const mockResponse = { json: () => Promise.resolve(mockData) };
+    const baseURL = 'https://api.example.com';
+
+    it.each([
+      { format: 'json' as const, data: { id: 1, name: 'John' }, expected: { id: 1, name: 'John' } },
+      { format: 'text' as const, data: 'Hello World', expected: 'Hello World' },
+      { format: 'raw' as const, data: new Response('Hello World'), expected: new Response('Hello World') },
+      { data: { id: 1, name: 'John' }, expected: { id: 1, name: 'John' } },
+    ])('should parse $format response correctly', async ({ format, data, expected }) => {
+      const mockResponse = new Response(typeof data === 'string' ? data : JSON.stringify(data));
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-      });
+      const delegate = createFetchDelegate({ baseURL, format });
 
       const result = await delegate.get('/users/1');
-      expect(result).toEqual(mockData);
-    });
-
-    it('should parse text response when format is text', async () => {
-      const mockText = 'Hello World';
-      const mockResponse = { text: () => Promise.resolve(mockText) };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-        format: 'text',
-      });
-
-      const result = await delegate.get('/users/1');
-      expect(result).toBe(mockText);
-    });
-
-    it('should return raw response when format is raw', async () => {
-      const mockResponse = { status: 200, ok: true };
-      mockFetch.mockResolvedValue(mockResponse);
-
-      const delegate = createFetchDelegate({
-        baseURL: 'https://api.example.com',
-        type: 'http',
-        format: 'raw',
-      });
-
-      const result = await delegate.get('/users/1');
-      expect(result).toBe(mockResponse);
+      expect(result).toEqual(expected);
     });
   });
 });
