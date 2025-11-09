@@ -1,6 +1,6 @@
 export interface HttpRequestOptions {
   headers?: Record<string, string>;
-  params?: Record<string, string>;
+  params?: Record<PropertyKey, string | number | Date | boolean | null | undefined | Array<string | number | Date | boolean | null | undefined>>;
 }
 
 export type HttpDelegate = {

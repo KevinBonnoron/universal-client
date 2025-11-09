@@ -101,6 +101,10 @@ Delegates are the transport layer implementations. Located in `src/utils/delegat
 
 **HTTP Delegates** (`src/utils/delegate/http/`):
 - `fetch-delegate.utils.ts`: Default implementation using native fetch (no dependencies)
+  - Supports rich query parameter types: strings, numbers, booleans, Dates (ISO format), arrays, null/undefined
+  - Arrays are serialized with `[]` suffix notation (e.g., `tags[]=admin&tags[]=user`)
+  - Undefined/null values are automatically filtered from query strings
+  - Date objects are converted to ISO strings
 - `axios-delegate.utils.ts`: Axios implementation (peer dependency)
 - `better-fetch-delegate.utils.ts`: Better-fetch implementation (peer dependency)
 
@@ -115,6 +119,8 @@ Delegates are the transport layer implementations. Located in `src/utils/delegat
 Core types in `src/types/`:
 - `feature.type.ts`: Base `Feature<Output, Input>` type
 - `delegate.type.ts`: `Delegate`, `HttpDelegate`, `WebSocketDelegate`, `ServerSentEventDelegate` interfaces
+  - `HttpRequestOptions.params` now supports: `string | number | Date | boolean | null | undefined | Array<...>`
+  - Keys can be any `PropertyKey` (string, number, or symbol)
 - `delegate-feature.type.ts`: `DelegateFeature<O, D>` for features that operate on delegates
 
 ## Bundle Size Optimization

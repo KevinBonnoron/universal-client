@@ -26,6 +26,7 @@ describe('createFetchDelegate', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(`${baseURL}${url}`, {
         headers: {},
+        method: 'GET',
       });
     });
 
@@ -34,7 +35,7 @@ describe('createFetchDelegate', () => {
       mockFetch.mockResolvedValue(mockResponse);
 
       const delegate = createFetchDelegate({ baseURL });
-      const params = { include: 'profile', format: 'json' };
+      const params = { include: 'profile', date: new Date('2020-01-01T00:00:00Z'), tags: ['admin', 'user'], isActive: true, count: 10, limit: undefined };
       const headers = { 'Content-Type': 'application/json' };
 
       await delegate.get(url, { params, headers });
@@ -42,7 +43,7 @@ describe('createFetchDelegate', () => {
       const fetchUrl = mockFetch.mock.calls[0][0] as string;
       const options = mockFetch.mock.calls[0][1] as RequestInit;
 
-      expect(fetchUrl).toBe(`${baseURL}${url}?include=profile&format=json`);
+      expect(fetchUrl).toBe(`${baseURL}${url}?include=profile&date=2020-01-01T00%3A00%3A00.000Z&tags%5B%5D=admin&tags%5B%5D=user&isActive=true&count=10`);
       expect(options.headers).toEqual(headers);
     });
 
