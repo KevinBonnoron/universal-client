@@ -6,7 +6,11 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": ["biomejs.biome"]
+      "extensions": [
+        "Anthropic.claude-code",
+        "biomejs.biome",
+        "github.vscode-github-actions"
+      ]
     }
   }
 }

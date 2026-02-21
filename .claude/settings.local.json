@@ -1,6 +1,11 @@
 {
   "permissions": {
-    "allow": ["WebFetch(domain:github.com)", "WebFetch(domain:raw.githubusercontent.com)"],
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ls:*)",
+      "Bash(bun run type-check:*)"
+    ],
     "deny": [],
     "ask": []
   }
