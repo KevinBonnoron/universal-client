@@ -507,7 +507,7 @@ describe('createServerSentEventDelegate', () => {
       expect(mockES1.close).toHaveBeenCalledTimes(1);
     });
 
-    it('should not preserve registered listeners across reopens', async () => {
+    it('should preserve registered listeners across reopens', async () => {
       const mockES1 = createMockEventSource();
       const mockES2 = createMockEventSource();
       let callCount = 0;
@@ -527,7 +527,7 @@ describe('createServerSentEventDelegate', () => {
       delegate.open();
       mockES2._emit('message', { data: 'from-second' });
 
-      expect(messages).toEqual(['from-first']);
+      expect(messages).toEqual(['from-first', 'from-second']);
     });
 
     it('should close fetch connection before opening EventSource', async () => {
