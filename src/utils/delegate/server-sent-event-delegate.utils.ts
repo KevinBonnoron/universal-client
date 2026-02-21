@@ -29,7 +29,13 @@ export async function createServerSentEventDelegate({ baseURL }: CreateServerSen
     if (eventSource) {
       eventSource.close();
       eventSource = null;
+
+      openListeners.clear();
+      messageListeners.clear();
+      errorListeners.clear();
+      eventListeners.clear();
     }
+
     if (abortController) {
       abortController.abort();
       abortController = null;
