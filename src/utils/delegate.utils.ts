@@ -1,4 +1,4 @@
-import type { Delegate, HttpDelegate, ServerSentEventDelegate, WebSocketDelegate } from '../types';
+import type { Delegate, HttpDelegate, ServerSentEventDelegate, SseOpenOptions, WebSocketDelegate } from '../types';
 import { createHttpDelegate, createServerSentEventDelegate, createWebSocketDelegate, type HttpDelegateOptions, type ServerSentEventDelegateOptions, type WebSocketDelegateOptions } from './delegate';
 
 export function isHttpDelegate(delegate: unknown): delegate is HttpDelegate {
@@ -10,7 +10,7 @@ export function isWebSocketDelegate(delegate: unknown): delegate is WebSocketDel
 }
 
 export function isServerSentEventDelegate(delegate: unknown): delegate is ServerSentEventDelegate {
-  return typeof delegate === 'object' && delegate !== null && 'onMessage' in delegate && 'onError' in delegate && 'onOpen' in delegate && 'subscribe' in delegate;
+  return typeof delegate === 'object' && delegate !== null && 'open' in delegate && 'onMessage' in delegate && 'onError' in delegate && 'onOpen' in delegate && 'subscribe' in delegate;
 }
 
 export function isDelegate(delegate: unknown): delegate is Delegate {
@@ -88,6 +88,11 @@ function createLazyServerSentEventDelegate(options: ServerSentEventDelegateOptio
   };
 
   return {
+    open(openOptions?: SseOpenOptions): void {
+      ensureDelegate()
+        .then((d) => d.open(openOptions))
+        .catch((error) => console.error('[SSE] Failed to open connection:', error));
+    },
     close(): void {
       if (delegatePromise) {
         delegatePromise.then((d) => d.close()).catch(console.error);

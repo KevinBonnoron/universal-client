@@ -21,7 +21,15 @@ export interface WebSocketDelegate {
   onMessage(callback: (data: unknown) => void): () => void;
 }
 
+export interface SseOpenOptions {
+  method?: 'GET' | 'POST';
+  body?: unknown;
+  headers?: Record<string, string>;
+  url?: string;
+}
+
 export interface ServerSentEventDelegate {
+  open(options?: SseOpenOptions): void;
   close(): void;
   onOpen(callback: (event: Event) => void): () => void;
   onError(callback: (event: Event) => void): () => void;

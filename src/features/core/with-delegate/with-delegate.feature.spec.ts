@@ -69,6 +69,7 @@ describe('withDelegate', () => {
     const result = feature({});
 
     expect(result.delegate).toBeDefined();
+    expect(typeof result.delegate.open).toBe('function');
     expect(typeof result.delegate.onMessage).toBe('function');
     expect(typeof result.delegate.onError).toBe('function');
     expect(typeof result.delegate.onOpen).toBe('function');

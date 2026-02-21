@@ -49,6 +49,7 @@ describe('delegate.utils', () => {
   describe('isServerSentEventDelegate', () => {
     it('should return true for valid ServerSentEvent delegate', () => {
       const sseDelegate = {
+        open: () => {},
         onMessage: () => {},
         onError: () => {},
         onOpen: () => {},
@@ -92,6 +93,7 @@ describe('delegate.utils', () => {
 
     it('should return true for ServerSentEvent delegate', () => {
       const sseDelegate = {
+        open: () => {},
         onMessage: () => {},
         onError: () => {},
         onOpen: () => {},
