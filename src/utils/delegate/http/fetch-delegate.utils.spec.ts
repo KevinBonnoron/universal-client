@@ -128,7 +128,7 @@ describe('createFetchDelegate', () => {
       expect(mockFetch).toHaveBeenCalledWith(`${baseURL}${url}`, {
         method: httpMethod,
         body: JSON.stringify(data),
-        headers: {},
+        headers: { 'Content-Type': 'application/json' },
       });
     });
 
@@ -158,6 +158,61 @@ describe('createFetchDelegate', () => {
       const testData = { name: 'John' };
 
       await expect(delegate[method](url, testData)).rejects.toThrow('Forbidden');
+    });
+
+    it('should send FormData body without setting Content-Type', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      const formData = new FormData();
+      formData.append('file', new Blob(['content']), 'test.txt');
+
+      await delegate[method](url, formData);
+
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+      expect(options.body).toBe(formData);
+      expect(options.headers).toEqual({});
+    });
+
+    it('should send Blob body without setting Content-Type', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      const blob = new Blob(['content'], { type: 'text/plain' });
+
+      await delegate[method](url, blob);
+
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+      expect(options.body).toBe(blob);
+      expect(options.headers).toEqual({});
+    });
+
+    it('should send string body without setting Content-Type', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+
+      await delegate[method](url, 'raw string body');
+
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+      expect(options.body).toBe('raw string body');
+      expect(options.headers).toEqual({});
+    });
+
+    it('should not override Content-Type when explicitly provided', async () => {
+      const mockResponse = new Response(JSON.stringify({ success: true }));
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      const headers = { 'Content-Type': 'application/xml' };
+
+      await delegate[method](url, { name: 'John' }, { headers });
+
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+      expect(options.headers).toEqual({ 'Content-Type': 'application/xml' });
     });
   });
 

@@ -68,8 +68,13 @@ export function createFetchDelegate({ baseURL, format = 'json' }: Omit<CreateFet
       },
     };
 
-    if (body) {
-      options.body = JSON.stringify(body);
+    if (body !== undefined && body !== null) {
+      if (body instanceof FormData || body instanceof Blob || body instanceof ArrayBuffer || body instanceof URLSearchParams || body instanceof ReadableStream || typeof body === 'string') {
+        options.body = body;
+      } else {
+        options.body = JSON.stringify(body);
+        (options.headers as Record<string, string>)['Content-Type'] ??= 'application/json';
+      }
     }
 
     return fetch(`${baseURL}${url}${getURLSearchParams(params)}`, options).then(parseResponse(format)) as Promise<T>;
