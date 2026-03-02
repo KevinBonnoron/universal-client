@@ -16,5 +16,4 @@ export interface CreateFetchDelegateOptions extends RequestInit {
   type: 'http';
   impl?: 'fetch';
   baseURL: string;
-  format?: 'json' | 'text' | 'raw';
 }

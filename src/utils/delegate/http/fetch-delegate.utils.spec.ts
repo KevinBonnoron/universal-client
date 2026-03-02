@@ -304,16 +304,16 @@ describe('createFetchDelegate', () => {
     });
 
     describe('with different response formats', () => {
-      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'raw' as const }, { format: undefined }])('should throw error with format=$format', async ({ format }) => {
+      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'blob' as const }, { format: 'raw' as const }, { format: undefined }])('should throw error with format=$format', async ({ format }) => {
         const mockResponse = new Response(JSON.stringify({ error: 'Server error' }), {
           status: 500,
           statusText: 'Internal Server Error',
         });
         mockFetch.mockResolvedValue(mockResponse);
 
-        const delegate = createFetchDelegate({ baseURL, format });
+        const delegate = createFetchDelegate({ baseURL });
 
-        await expect(delegate.get('/users')).rejects.toThrow('Server error');
+        await expect(delegate.get('/users', { format })).rejects.toThrow('Server error');
       });
     });
   });
@@ -321,19 +321,113 @@ describe('createFetchDelegate', () => {
   describe('Response parsing', () => {
     const baseURL = 'https://api.example.com';
 
-    it.each([
-      { format: 'json' as const, data: { id: 1, name: 'John' }, expected: { id: 1, name: 'John' } },
-      { format: 'text' as const, data: 'Hello World', expected: 'Hello World' },
-      { format: 'raw' as const, data: new Response('Hello World'), expected: new Response('Hello World') },
-      { data: { id: 1, name: 'John' }, expected: { id: 1, name: 'John' } },
-    ])('should parse $format response correctly', async ({ format, data, expected }) => {
-      const mockResponse = new Response(typeof data === 'string' ? data : JSON.stringify(data));
+    describe('explicit format override', () => {
+      it.each([
+        { format: 'json' as const, contentType: 'text/plain', body: JSON.stringify({ id: 1 }), expected: { id: 1 } },
+        { format: 'text' as const, contentType: 'application/json', body: 'Hello World', expected: 'Hello World' },
+        { format: 'blob' as const, contentType: 'text/plain', body: 'binary', expected: Blob },
+        { format: 'raw' as const, contentType: 'application/json', body: 'raw', expected: Response },
+      ])('should use $format format regardless of Content-Type=$contentType', async ({ format, contentType, body, expected }) => {
+        mockFetch.mockResolvedValue(new Response(body, { headers: { 'Content-Type': contentType } }));
+
+        const delegate = createFetchDelegate({ baseURL });
+        const result = await delegate.get('/test', { format });
+
+        if (typeof expected === 'function') {
+          expect(result).toBeInstanceOf(expected);
+        } else {
+          expect(result).toEqual(expected);
+        }
+      });
+    });
+
+    describe('auto-detection from Content-Type', () => {
+      it.each([
+        // text/*
+        { contentType: 'text/plain', body: 'Hello', expected: 'Hello' },
+        { contentType: 'text/html', body: '<h1>Hello</h1>', expected: '<h1>Hello</h1>' },
+        { contentType: 'text/css', body: 'body {}', expected: 'body {}' },
+
+        // application/json
+        { contentType: 'application/json', body: JSON.stringify({ id: 1 }), expected: { id: 1 } },
+        { contentType: 'application/json;charset=utf-8', body: JSON.stringify({ id: 1 }), expected: { id: 1 } },
+
+        // application/* text-like
+        { contentType: 'application/xml', body: '<root/>', expected: '<root/>' },
+        { contentType: 'application/javascript', body: 'var a = 1', expected: 'var a = 1' },
+
+        // application/* binary
+        { contentType: 'application/octet-stream', body: 'binary', expected: Blob },
+        { contentType: 'application/pdf', body: 'pdf', expected: Blob },
+        { contentType: 'application/zip', body: 'zip', expected: Blob },
+        { contentType: 'application/gzip', body: 'gzip', expected: Blob },
+        { contentType: 'application/wasm', body: 'wasm', expected: Blob },
+        { contentType: 'application/protobuf', body: 'proto', expected: Blob },
+
+        // image/*
+        { contentType: 'image/png', body: 'img', expected: Blob },
+        { contentType: 'image/jpeg', body: 'img', expected: Blob },
+        { contentType: 'image/svg+xml', body: 'img', expected: Blob },
+
+        // audio/*
+        { contentType: 'audio/mpeg', body: 'audio', expected: Blob },
+        { contentType: 'audio/ogg', body: 'audio', expected: Blob },
+
+        // video/*
+        { contentType: 'video/mp4', body: 'video', expected: Blob },
+        { contentType: 'video/webm', body: 'video', expected: Blob },
+      ])('should auto-detect format from Content-Type=$contentType', async ({ contentType, body, expected }) => {
+        mockFetch.mockResolvedValue(new Response(body, { headers: { 'Content-Type': contentType } }));
+
+        const delegate = createFetchDelegate({ baseURL });
+        const result = await delegate.get('/test');
+
+        if (typeof expected === 'function') {
+          expect(result).toBeInstanceOf(expected);
+        } else {
+          expect(result).toEqual(expected);
+        }
+      });
+
+      it('should return raw Response when no Content-Type header', async () => {
+        mockFetch.mockResolvedValue(new Response('data'));
+
+        const delegate = createFetchDelegate({ baseURL });
+        const result = await delegate.get<Response>('/test');
+        expect(result).toBeInstanceOf(Response);
+      });
+    });
+  });
+
+  describe('AbortSignal', () => {
+    const baseURL = 'https://api.example.com';
+
+    it('should pass signal to fetch', async () => {
+      const mockResponse = new Response(JSON.stringify({ id: 1 }), { headers: { 'Content-Type': 'application/json' } });
       mockFetch.mockResolvedValue(mockResponse);
 
-      const delegate = createFetchDelegate({ baseURL, format });
+      const controller = new AbortController();
+      const delegate = createFetchDelegate({ baseURL });
+      await delegate.get('/users/1', { signal: controller.signal });
 
-      const result = await delegate.get('/users/1');
-      expect(result).toEqual(expected);
+      expect(mockFetch).toHaveBeenCalledWith(`${baseURL}/users/1`, {
+        method: 'GET',
+        headers: {},
+        signal: controller.signal,
+      });
+    });
+
+    it('should not include signal when not provided', async () => {
+      const mockResponse = new Response(JSON.stringify({ id: 1 }), { headers: { 'Content-Type': 'application/json' } });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const delegate = createFetchDelegate({ baseURL });
+      await delegate.get('/users/1');
+
+      expect(mockFetch).toHaveBeenCalledWith(`${baseURL}/users/1`, {
+        method: 'GET',
+        headers: {},
+      });
     });
   });
 });

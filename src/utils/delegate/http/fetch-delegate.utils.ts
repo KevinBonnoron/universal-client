@@ -1,7 +1,25 @@
 import type { HttpDelegate, HttpRequestOptions } from '../../../types';
 import type { CreateFetchDelegateOptions } from './types';
 
-function parseResponse(format: CreateFetchDelegateOptions['format']) {
+function detectFormat(response: Response): HttpRequestOptions['format'] {
+  const contentType = response.headers.get('Content-Type') ?? '';
+
+  if (contentType.includes('application/json')) {
+    return 'json';
+  }
+
+  if (contentType.startsWith('text/') || contentType.includes('application/xml') || contentType.includes('application/javascript')) {
+    return 'text';
+  }
+
+  if (contentType.startsWith('image/') || contentType.startsWith('audio/') || contentType.startsWith('video/') || contentType.startsWith('application/')) {
+    return 'blob';
+  }
+
+  return 'raw';
+}
+
+function parseResponse(format: HttpRequestOptions['format']) {
   return async (response: Response) => {
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -20,12 +38,17 @@ function parseResponse(format: CreateFetchDelegateOptions['format']) {
       throw new Error(errorMessage);
     }
 
-    if (format === 'json') {
+    const resolved = format ?? detectFormat(response);
+    if (resolved === 'json') {
       return response.json();
     }
 
-    if (format === 'text') {
+    if (resolved === 'text') {
       return response.text();
+    }
+
+    if (resolved === 'blob') {
+      return response.blob();
     }
 
     return response;
@@ -59,14 +82,18 @@ function getURLSearchParams(params?: HttpRequestOptions['params']) {
  * @param options - The options to be used in the delegate.
  * @returns A delegate to handle fetch requests.
  */
-export function createFetchDelegate({ baseURL, format = 'json' }: Omit<CreateFetchDelegateOptions, 'type' | 'impl'>): HttpDelegate {
-  function fetchRequest<T>(method: string, url: string, body?: unknown, { params = {}, headers = {} }: HttpRequestOptions = {}) {
+export function createFetchDelegate({ baseURL }: Omit<CreateFetchDelegateOptions, 'type' | 'impl'>): HttpDelegate {
+  function fetchRequest<T>(method: string, url: string, body?: unknown, { params = {}, headers = {}, format, signal }: HttpRequestOptions = {}) {
     const options: RequestInit = {
       method,
       headers: {
         ...headers,
       },
     };
+
+    if (signal) {
+      options.signal = signal;
+    }
 
     if (body !== undefined && body !== null) {
       if (body instanceof FormData || body instanceof Blob || body instanceof ArrayBuffer || body instanceof URLSearchParams || body instanceof ReadableStream || typeof body === 'string') {
@@ -81,20 +108,20 @@ export function createFetchDelegate({ baseURL, format = 'json' }: Omit<CreateFet
   }
 
   return {
-    get<T>(url: string, { params = {}, headers = {} }: HttpRequestOptions = {}) {
-      return fetchRequest<T>('GET', url, undefined, { params, headers });
+    get<T>(url: string, options?: HttpRequestOptions) {
+      return fetchRequest<T>('GET', url, undefined, options);
     },
-    post<T>(url: string, body: unknown, { params = {}, headers = {} }: HttpRequestOptions = {}) {
-      return fetchRequest<T>('POST', url, body, { params, headers });
+    post<T>(url: string, body: unknown, options?: HttpRequestOptions) {
+      return fetchRequest<T>('POST', url, body, options);
     },
-    patch<T>(url: string, body: unknown, { params = {}, headers = {} }: HttpRequestOptions = {}) {
-      return fetchRequest<T>('PATCH', url, body, { params, headers });
+    patch<T>(url: string, body: unknown, options?: HttpRequestOptions) {
+      return fetchRequest<T>('PATCH', url, body, options);
     },
-    put<T>(url: string, body: unknown, { params = {}, headers = {} }: HttpRequestOptions = {}) {
-      return fetchRequest<T>('PUT', url, body, { params, headers });
+    put<T>(url: string, body: unknown, options?: HttpRequestOptions) {
+      return fetchRequest<T>('PUT', url, body, options);
     },
-    delete<T>(url: string, { params = {}, headers = {} }: HttpRequestOptions = {}) {
-      return fetchRequest<T>('DELETE', url, undefined, { params, headers });
+    delete<T>(url: string, options?: HttpRequestOptions) {
+      return fetchRequest<T>('DELETE', url, undefined, options);
     },
   };
 }
