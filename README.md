@@ -1,5 +1,10 @@
 # Universal Client
 
+[![CI](https://github.com/KevinBonnoron/universal-client/actions/workflows/pr.yml/badge.svg)](https://github.com/KevinBonnoron/universal-client/actions/workflows/pr.yml)
+[![Documentation](https://github.com/KevinBonnoron/universal-client/actions/workflows/docs.yml/badge.svg)](https://kevinbonnoron.github.io/universal-client/)
+[![npm version](https://img.shields.io/npm/v/universal-client)](https://www.npmjs.com/package/universal-client)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A flexible and extensible universal client for web applications supporting multiple transport protocols (HTTP, WebSocket, Server-Sent Events) inspired by @ngrx/signals syntax.
 
 ## Features
@@ -13,32 +18,11 @@ A flexible and extensible universal client for web applications supporting multi
 
 ## Installation
 
-**📦 npm**
 ```bash
 npm install universal-client
 ```
 
-**🧶 yarn**
-```bash
-yarn add universal-client
-```
-
-**📌 pnpm**
-```bash
-pnpm add universal-client
-```
-
-**🍞 bun**
-```bash
-bun add universal-client
-```
-
-**🦕 deno & JSR**
-```bash
-deno add @kevinbonnoron/universal-client
-```
-
-> **Note**: On JSR, the package is published as `@kevinbonnoron/universal-client` (scoped), but on npm it's `universal-client` (unscoped).
+> Also available via `yarn`, `pnpm`, `bun`, and [JSR](https://jsr.io/@kevinbonnoron/universal-client) (`deno add @kevinbonnoron/universal-client`).
 
 ## Quick Start
 
@@ -57,14 +41,13 @@ const user = await client.getUser('1');
 console.log(user);
 ```
 
-## Examples
+## Documentation
 
-Check out the [`examples/`](./examples) directory for comprehensive TypeScript examples:
+Full documentation is available at **[kevinbonnoron.github.io/universal-client](https://kevinbonnoron.github.io/universal-client/)**.
 
-- **[Basic Usage](./examples/basic-usage.md)** - HTTP requests, CRUD operations, error handling with complete type safety
-- **[WebSocket](./examples/websocket-example.md)** - Real-time communication with typed message handling
-- **[Server-Sent Events](./examples/sse-example.md)** - Receiving real-time updates with custom event types
-- **[Interceptors](./examples/interceptor-example.md)** - Transform requests/responses, add auth, convert dates, handle errors
-- **[Advanced Features](./examples/advanced-features.md)** - Production-ready patterns: hooks, caching, authentication, retry logic
-
-Each example includes complete TypeScript code with detailed explanations, type definitions, and real-world usage patterns.
+- [Getting Started](https://kevinbonnoron.github.io/universal-client/getting-started)
+- [Basic Usage](https://kevinbonnoron.github.io/universal-client/guide/basic-usage) - HTTP requests, CRUD operations, error handling
+- [Interceptors](https://kevinbonnoron.github.io/universal-client/guide/interceptors) - Transform requests/responses, add auth
+- [WebSocket](https://kevinbonnoron.github.io/universal-client/guide/websocket) - Real-time communication
+- [Server-Sent Events](https://kevinbonnoron.github.io/universal-client/guide/sse) - Real-time updates
+- [Advanced Features](https://kevinbonnoron.github.io/universal-client/guide/advanced) - Telemetry, environments, hooks, offline support

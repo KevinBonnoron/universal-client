@@ -1,15 +1,11 @@
-# Interceptor Example
+---
+title: Interceptors
+outline: deep
+---
 
-This example demonstrates how to use the `withInterceptor` feature to modify requests and responses with custom logic.
+# Interceptors
 
-## Overview
-
-Learn how to:
-- Intercept and modify request URLs, headers, and body
-- Transform response data (e.g., convert ISO dates to Date objects)
-- Handle errors globally
-- Add authentication tokens
-- Log requests and responses
+Learn how to use the `withInterceptor` feature to modify requests and responses with custom logic.
 
 ## Basic Usage
 
@@ -85,7 +81,6 @@ const client = universalClient(
     after: <T>(context) => {
       const result = context.result as any;
 
-      // Convert ISO date strings to Date objects
       const convertDates = (obj: any): any => {
         if (!obj || typeof obj !== 'object') return obj;
 
@@ -129,7 +124,6 @@ const client = universalClient(
   withInterceptor({
     name: 'requestEnricher',
     before: (context) => {
-      // Add timestamp to all POST/PUT/PATCH requests
       if (context.method !== 'get' && context.method !== 'delete') {
         return {
           body: {
@@ -163,13 +157,7 @@ const client = universalClient(
   withInterceptor({
     name: 'errorLogger',
     error: (method, url, error) => {
-      // Log to error tracking service
       console.error(`[${method.toUpperCase()}] ${url} failed:`, error);
-
-      // Send to external service
-      // Sentry.captureException(error, {
-      //   tags: { method, url }
-      // });
     }
   }),
   withMethods(({ delegate }) => ({
@@ -177,7 +165,6 @@ const client = universalClient(
   }))
 );
 
-// Errors will be automatically logged
 try {
   await client.getUser(999);
 } catch (error) {
@@ -196,10 +183,10 @@ const client = universalClient(
   withInterceptor({
     name: 'logger',
     before: (context) => {
-      console.log(`→ [${context.method.toUpperCase()}] ${context.url}`, context.body);
+      console.log(`-> [${context.method.toUpperCase()}] ${context.url}`, context.body);
     },
     after: (context) => {
-      console.log(`← [${context.method.toUpperCase()}] ${context.url}`, context.result);
+      console.log(`<- [${context.method.toUpperCase()}] ${context.url}`, context.result);
       return context.result;
     }
   }),
@@ -208,8 +195,6 @@ const client = universalClient(
   }))
 );
 
-// Will log: → [GET] https://api.example.com/users undefined
-// Will log: ← [GET] https://api.example.com/users [{ id: 1, ... }]
 await client.getUsers();
 ```
 
@@ -345,12 +330,9 @@ const apiClient = universalClient(
     name: 'errorHandler',
     error: (method, url, error) => {
       if (error.message.includes('401')) {
-        // Clear auth and redirect to login
         localStorage.removeItem('authToken');
         window.location.href = '/login';
       }
-
-      // Log to monitoring service
       console.error(`API Error [${method.toUpperCase()}] ${url}:`, error);
     }
   }),
@@ -361,11 +343,8 @@ const apiClient = universalClient(
   }),
 
   withMethods(({ delegate }) => ({
-    // User API
     getUser: (id: number) => delegate.get(`/users/${id}`),
     updateUser: (id: number, data: any) => delegate.patch(`/users/${id}`, data),
-
-    // Posts API
     getPosts: () => delegate.get('/posts'),
     createPost: (data: any) => delegate.post('/posts', data)
   }))
@@ -375,7 +354,7 @@ const apiClient = universalClient(
 apiClient.environments.setEnvironment('production');
 
 const user = await apiClient.getUser(1);
-console.log(user.createdAt instanceof Date); // true - dates are converted automatically
+console.log(user.createdAt instanceof Date); // true
 
 const metrics = apiClient.telemetry.getMetrics();
 console.log('API Metrics:', metrics);
@@ -407,11 +386,3 @@ interface HttpInterceptor {
   error?: (method: string, url: string, error: Error, body?: unknown) => void | Promise<void>;
 }
 ```
-
-## Key Benefits
-
-- **Flexible**: Modify any aspect of requests and responses
-- **Composable**: Stack multiple interceptors for different concerns
-- **Type-Safe**: Full TypeScript support with proper type inference
-- **Powerful**: Transform data, add authentication, log errors, and more
-- **Reusable**: Create interceptor utilities and share them across projects

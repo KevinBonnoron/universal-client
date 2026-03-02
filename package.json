@@ -25,6 +25,9 @@
   "files": [
     "dist"
   ],
+  "workspaces": [
+    "docs"
+  ],
   "scripts": {
     "build": "tsup",
     "build:watch": "tsup --watch",
