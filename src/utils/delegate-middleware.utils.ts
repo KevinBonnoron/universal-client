@@ -63,7 +63,7 @@ export function wrapHttpDelegate(delegate: HttpDelegate, interceptor: HttpInterc
           }
         }
 
-        const finalOptions = context.headers ? { headers: context.headers } : undefined;
+        const finalOptions = { ...options, headers: context.headers };
         let response = isGetOrDelete
           ? await (originalMethod as (url: string, options?: { headers?: Record<string, string> }) => Promise<T>)(context.url, finalOptions)
           : await (originalMethod as (url: string, body: unknown, options?: { headers?: Record<string, string> }) => Promise<T>)(context.url, context.body, finalOptions);

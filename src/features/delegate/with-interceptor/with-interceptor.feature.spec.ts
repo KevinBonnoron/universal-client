@@ -120,6 +120,36 @@ describe('withInterceptor', () => {
       expect(result.url).toBe('/v1/users/1');
     });
 
+    it('should preserve options (params, format, signal) through interceptor', async () => {
+      const mockDelegate = createMockDelegate();
+      const controller = new AbortController();
+
+      const client = universalClient(
+        () => ({ delegate: mockDelegate }),
+        withInterceptor({
+          name: 'authInterceptor',
+          before: () => ({
+            headers: { Authorization: 'Bearer token123' },
+          }),
+        }),
+        withMethods(({ delegate }) => ({
+          getUser: (id: number) => (delegate as HttpDelegate).get<UserResponse>(`/users/${id}`, { params: { include: 'profile' }, format: 'json', signal: controller.signal }),
+        })),
+      );
+
+      await client.getUser(1);
+
+      expect(mockDelegate.get).toHaveBeenCalledWith(
+        '/users/1',
+        expect.objectContaining({
+          params: { include: 'profile' },
+          format: 'json',
+          signal: controller.signal,
+          headers: { Authorization: 'Bearer token123' },
+        }),
+      );
+    });
+
     it('should handle errors', async () => {
       const errorHandler = mock((_method: string, _url: string, _error: string) => {});
       const mockDelegate = {
@@ -267,6 +297,37 @@ describe('withInterceptor', () => {
         expect.any(Object),
       );
       expect(result).toHaveProperty('intercepted', true);
+    });
+
+    it('should preserve options (params, format, signal) through interceptor', async () => {
+      const mockDelegate = createMockDelegate();
+      const controller = new AbortController();
+
+      const client = universalClient(
+        () => ({ delegate: mockDelegate }),
+        withInterceptor({
+          name: 'authInterceptor',
+          before: () => ({
+            headers: { Authorization: 'Bearer token123' },
+          }),
+        }),
+        withMethods(({ delegate }) => ({
+          createUser: (data: { name: string }) => (delegate as HttpDelegate).post<UserResponse>('/users', data, { params: { notify: 'true' }, format: 'json', signal: controller.signal }),
+        })),
+      );
+
+      await client.createUser({ name: 'John' });
+
+      expect(mockDelegate.post).toHaveBeenCalledWith(
+        '/users',
+        { name: 'John' },
+        expect.objectContaining({
+          params: { notify: 'true' },
+          format: 'json',
+          signal: controller.signal,
+          headers: { Authorization: 'Bearer token123' },
+        }),
+      );
     });
 
     it('should handle errors', async () => {
@@ -417,6 +478,37 @@ describe('withInterceptor', () => {
       expect(result).toHaveProperty('intercepted', true);
     });
 
+    it('should preserve options (params, format, signal) through interceptor', async () => {
+      const mockDelegate = createMockDelegate();
+      const controller = new AbortController();
+
+      const client = universalClient(
+        () => ({ delegate: mockDelegate }),
+        withInterceptor({
+          name: 'authInterceptor',
+          before: () => ({
+            headers: { Authorization: 'Bearer token123' },
+          }),
+        }),
+        withMethods(({ delegate }) => ({
+          updateUser: (id: number, data: { name: string }) => (delegate as HttpDelegate).patch<UserResponse>(`/users/${id}`, data, { params: { validate: 'true' }, format: 'json', signal: controller.signal }),
+        })),
+      );
+
+      await client.updateUser(1, { name: 'John Updated' });
+
+      expect(mockDelegate.patch).toHaveBeenCalledWith(
+        '/users/1',
+        { name: 'John Updated' },
+        expect.objectContaining({
+          params: { validate: 'true' },
+          format: 'json',
+          signal: controller.signal,
+          headers: { Authorization: 'Bearer token123' },
+        }),
+      );
+    });
+
     it('should handle errors', async () => {
       const errorHandler = mock((_method: string, _url: string, _error: string) => {});
       const mockDelegate = {
@@ -565,6 +657,37 @@ describe('withInterceptor', () => {
       expect(result).toHaveProperty('intercepted', true);
     });
 
+    it('should preserve options (params, format, signal) through interceptor', async () => {
+      const mockDelegate = createMockDelegate();
+      const controller = new AbortController();
+
+      const client = universalClient(
+        () => ({ delegate: mockDelegate }),
+        withInterceptor({
+          name: 'authInterceptor',
+          before: () => ({
+            headers: { Authorization: 'Bearer token123' },
+          }),
+        }),
+        withMethods(({ delegate }) => ({
+          replaceUser: (id: number, data: { name: string }) => (delegate as HttpDelegate).put<UserResponse>(`/users/${id}`, data, { params: { replace: 'full' }, format: 'json', signal: controller.signal }),
+        })),
+      );
+
+      await client.replaceUser(1, { name: 'John Replaced' });
+
+      expect(mockDelegate.put).toHaveBeenCalledWith(
+        '/users/1',
+        { name: 'John Replaced' },
+        expect.objectContaining({
+          params: { replace: 'full' },
+          format: 'json',
+          signal: controller.signal,
+          headers: { Authorization: 'Bearer token123' },
+        }),
+      );
+    });
+
     it('should handle errors', async () => {
       const errorHandler = mock((_method: string, _url: string, _error: string) => {});
       const mockDelegate = {
@@ -670,6 +793,36 @@ describe('withInterceptor', () => {
 
       expect(result).toHaveProperty('intercepted', true);
       expect(result.url).toBe('/v1/users/1');
+    });
+
+    it('should preserve options (params, format, signal) through interceptor', async () => {
+      const mockDelegate = createMockDelegate();
+      const controller = new AbortController();
+
+      const client = universalClient(
+        () => ({ delegate: mockDelegate }),
+        withInterceptor({
+          name: 'authInterceptor',
+          before: () => ({
+            headers: { Authorization: 'Bearer token123' },
+          }),
+        }),
+        withMethods(({ delegate }) => ({
+          deleteUser: (id: number) => (delegate as HttpDelegate).delete<UserResponse>(`/users/${id}`, { params: { soft: 'true' }, format: 'json', signal: controller.signal }),
+        })),
+      );
+
+      await client.deleteUser(1);
+
+      expect(mockDelegate.delete).toHaveBeenCalledWith(
+        '/users/1',
+        expect.objectContaining({
+          params: { soft: 'true' },
+          format: 'json',
+          signal: controller.signal,
+          headers: { Authorization: 'Bearer token123' },
+        }),
+      );
     });
 
     it('should handle errors', async () => {
