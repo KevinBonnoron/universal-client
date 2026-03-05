@@ -128,6 +128,30 @@ dashboardClient.onNotification((data) => {
 });
 ```
 
+### With Interceptors
+
+```typescript
+import { universalClient, withDelegate, withInterceptor, withMethods } from 'universal-client';
+
+const sseClient = universalClient(
+  withDelegate({ type: 'sse', url: 'https://your-sse-server.com/events' }),
+  withInterceptor({
+    beforeOpen: () => console.log('Opening SSE connection...'),
+    afterOpen: () => console.log('SSE connection established'),
+    beforeClose: () => console.log('Closing SSE connection...'),
+    afterClose: () => console.log('SSE connection closed'),
+    onError: (error) => console.error('SSE error:', error),
+    onMessage: (data) => console.log('Message intercepted:', data),
+  }),
+  withMethods(({ delegate }) => ({
+    connect: () => delegate.open(),
+    disconnect: () => delegate.close(),
+    onMessage: (callback: (data: unknown) => void) => delegate.onMessage(callback),
+    onNotification: (callback: (data: unknown) => void) => delegate.subscribe('notification', callback),
+  })),
+);
+```
+
 ### With Telemetry and Hooks
 
 ```typescript

@@ -1,25 +1,34 @@
-import type { DelegateFeature } from '../../../types';
-import { isHttpDelegate, wrapHttpDelegate } from '../../../utils';
-import type { HttpInterceptor } from '../../../utils/delegate-middleware.utils';
+import type { DelegateFeature, HttpInterceptor, ServerSentEventInterceptor, WebSocketInterceptor } from '../../../types';
+import { isHttpDelegate, isServerSentEventDelegate, isWebSocketDelegate, wrapHttpDelegate, wrapServerSentEventDelegate, wrapWebSocketDelegate } from '../../../utils';
 
-export interface InterceptorConfig extends HttpInterceptor {
-  name?: string;
-}
+export type InterceptorConfig = HttpInterceptor | ServerSentEventInterceptor | WebSocketInterceptor;
 
 /**
- * Add HTTP interceptor to the delegate.
+ * Add interceptor to the delegate.
  *
  * @param config - The interceptor configuration.
- * @returns A delegate feature that wraps the HTTP delegate with the interceptor.
+ * @returns A delegate feature that wraps the delegate with the interceptor.
  */
 export function withInterceptor(config: InterceptorConfig): DelegateFeature {
   return ({ delegate, ...rest }) => {
-    const { name: _name, ...interceptor } = config;
-
     if (isHttpDelegate(delegate)) {
       return {
         ...rest,
-        delegate: wrapHttpDelegate(delegate, interceptor),
+        delegate: wrapHttpDelegate(delegate, config as HttpInterceptor),
+      };
+    }
+
+    if (isServerSentEventDelegate(delegate)) {
+      return {
+        ...rest,
+        delegate: wrapServerSentEventDelegate(delegate, config as ServerSentEventInterceptor),
+      };
+    }
+
+    if (isWebSocketDelegate(delegate)) {
+      return {
+        ...rest,
+        delegate: wrapWebSocketDelegate(delegate, config as WebSocketInterceptor),
       };
     }
 

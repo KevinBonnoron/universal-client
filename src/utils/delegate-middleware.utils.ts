@@ -1,45 +1,4 @@
-import type { HttpDelegate, WebSocketDelegate } from '../types';
-
-/**
- * Context for request interception, allows modifying request properties
- */
-export interface RequestInterceptorContext {
-  method: string;
-  url: string;
-  headers?: Record<string, string>;
-  body?: unknown;
-}
-
-/**
- * Context for response interception
- */
-export interface ResponseInterceptorContext<T = unknown> {
-  method: string;
-  url: string;
-  response: T;
-}
-
-/**
- * Interceptor for HTTP delegate methods
- */
-export interface HttpInterceptor {
-  before?: (context: RequestInterceptorContext) => undefined | Partial<RequestInterceptorContext> | Promise<Partial<RequestInterceptorContext> | undefined>;
-  after?: <T>(context: ResponseInterceptorContext<T>) => undefined | Partial<T> | Promise<Partial<T> | undefined>;
-  error?: (method: string, url: string, error: Error, body?: unknown) => void | Promise<void>;
-}
-
-/**
- * Interceptor for WebSocket delegate methods
- */
-export interface WebSocketInterceptor {
-  beforeConnect?: () => void | Promise<void>;
-  afterConnect?: () => void | Promise<void>;
-  beforeSend?: (message: unknown) => void | Promise<void>;
-  afterSend?: (message: unknown) => void | Promise<void>;
-  beforeClose?: () => void | Promise<void>;
-  afterClose?: () => void | Promise<void>;
-  onError?: (error: Error) => void | Promise<void>;
-}
+import type { HttpDelegate, HttpInterceptor, RequestInterceptorContext, ServerSentEventDelegate, ServerSentEventInterceptor, SseOpenOptions, WebSocketDelegate, WebSocketInterceptor } from '../types';
 
 /**
  * Wraps an HTTP delegate with interceptors for all methods
@@ -56,8 +15,8 @@ export function wrapHttpDelegate(delegate: HttpDelegate, interceptor: HttpInterc
 
       let context: RequestInterceptorContext = { method: methodName, url, headers: options?.headers ?? {}, body };
       try {
-        if (interceptor.before) {
-          const beforeResult = await interceptor.before(context);
+        if (interceptor.onBeforeRequest) {
+          const beforeResult = await interceptor.onBeforeRequest(context);
           if (beforeResult && typeof beforeResult === 'object') {
             context = { ...context, ...beforeResult };
           }
@@ -69,8 +28,8 @@ export function wrapHttpDelegate(delegate: HttpDelegate, interceptor: HttpInterc
           : await (originalMethod as (url: string, body: unknown, options?: { headers?: Record<string, string> }) => Promise<T>)(context.url, context.body, finalOptions);
 
         // After interceptor
-        if (interceptor.after) {
-          const afterResult = await interceptor.after<T>({ method: methodName, url: context.url, response });
+        if (interceptor.onAfterResponse) {
+          const afterResult = await interceptor.onAfterResponse<T>({ method: methodName, url: context.url, response });
           if (afterResult && typeof afterResult === 'object') {
             response = { ...response, ...afterResult };
           }
@@ -78,8 +37,8 @@ export function wrapHttpDelegate(delegate: HttpDelegate, interceptor: HttpInterc
 
         return response;
       } catch (error) {
-        if (interceptor.error) {
-          await interceptor.error(methodName, context.url, error as Error, context.body);
+        if (interceptor.onError) {
+          await interceptor.onError(methodName, context.url, error as Error, context.body);
         }
 
         throw error;
@@ -136,6 +95,56 @@ export function wrapWebSocketDelegate(delegate: WebSocketDelegate, interceptor: 
       if (interceptor.afterClose) {
         Promise.resolve(interceptor.afterClose()).catch(console.error);
       }
+    },
+  };
+}
+
+/**
+ * Wraps a Server-Sent Event delegate with interceptors for open, close, onError, and onMessage
+ */
+export function wrapServerSentEventDelegate(delegate: ServerSentEventDelegate, interceptor: ServerSentEventInterceptor): ServerSentEventDelegate {
+  return {
+    ...delegate,
+    open: (options?: SseOpenOptions) => {
+      if (interceptor.beforeOpen) {
+        Promise.resolve(interceptor.beforeOpen(options)).catch(console.error);
+      }
+
+      delegate.open(options);
+
+      if (interceptor.afterOpen) {
+        Promise.resolve(interceptor.afterOpen(options)).catch(console.error);
+      }
+    },
+
+    close: () => {
+      if (interceptor.beforeClose) {
+        Promise.resolve(interceptor.beforeClose()).catch(console.error);
+      }
+
+      delegate.close();
+
+      if (interceptor.afterClose) {
+        Promise.resolve(interceptor.afterClose()).catch(console.error);
+      }
+    },
+
+    onError: (callback: (event: Event) => void) => {
+      return delegate.onError((event: Event) => {
+        if (interceptor.onError) {
+          Promise.resolve(interceptor.onError(new Error(event.type))).catch(console.error);
+        }
+        callback(event);
+      });
+    },
+
+    onMessage: (callback: (data: unknown) => void) => {
+      return delegate.onMessage((data: unknown) => {
+        if (interceptor.onMessage) {
+          Promise.resolve(interceptor.onMessage(data)).catch(console.error);
+        }
+        callback(data);
+      });
     },
   };
 }

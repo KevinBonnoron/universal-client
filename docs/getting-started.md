@@ -38,11 +38,12 @@ deno add @kevinbonnoron/universal-client
 ## Quick Start
 
 ```ts
-import { universalClient, withDelegate, withMethods } from 'universal-client';
+import { universalClient, withFetchDelegate, withMethods } from 'universal-client';
 
 const client = universalClient(
-  // Can use axios, fetch or better-fetch as implementation
-  withDelegate({ type: 'http', impl: 'axios', baseURL: 'https://jsonplaceholder.typicode.com' }),
+  withFetchDelegate({ baseURL: 'https://jsonplaceholder.typicode.com' }),
+  // withBetterFetchDelegate({ baseURL: 'https://jsonplaceholder.typicode.com' }),
+  // withAxiosDelegate({ baseURL: 'https://jsonplaceholder.typicode.com' }),
   withMethods(({ delegate }) => ({
     getUser: (id: string) => delegate.get(`/users/${id}`),
   })),

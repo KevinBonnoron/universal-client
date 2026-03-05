@@ -7,7 +7,7 @@ outline: deep
 
 Learn how to use the `withInterceptor` feature to modify requests and responses with custom logic.
 
-## Basic Usage
+## HTTP Interceptors
 
 ### Modifying Request URLs
 
@@ -17,8 +17,7 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'apiPrefix',
-    before: (context) => {
+    onBeforeRequest: (context) => {
       // Add API version prefix to all requests
       return { url: `/api/v1${context.url}` };
     }
@@ -41,8 +40,7 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'auth',
-    before: (context) => {
+    onBeforeRequest: (context) => {
       const token = localStorage.getItem('authToken');
       return {
         headers: {
@@ -77,9 +75,8 @@ interface User {
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'dateConverter',
-    after: <T>(context) => {
-      const result = context.result as any;
+    onAfterResponse: <T>(context) => {
+      const response = context.response as any;
 
       const convertDates = (obj: any): any => {
         if (!obj || typeof obj !== 'object') return obj;
@@ -101,7 +98,7 @@ const client = universalClient(
         return converted;
       };
 
-      return convertDates(result) as T;
+      return convertDates(response) as T;
     }
   }),
   withMethods(({ delegate }) => ({
@@ -122,8 +119,7 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'requestEnricher',
-    before: (context) => {
+    onBeforeRequest: (context) => {
       if (context.method !== 'get' && context.method !== 'delete') {
         return {
           body: {
@@ -155,8 +151,7 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'errorLogger',
-    error: (method, url, error) => {
+    onError: (method, url, error) => {
       console.error(`[${method.toUpperCase()}] ${url} failed:`, error);
     }
   }),
@@ -181,13 +176,11 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'http', impl: 'fetch' }),
   withInterceptor({
-    name: 'logger',
-    before: (context) => {
+    onBeforeRequest: (context) => {
       console.log(`-> [${context.method.toUpperCase()}] ${context.url}`, context.body);
     },
-    after: (context) => {
-      console.log(`<- [${context.method.toUpperCase()}] ${context.url}`, context.result);
-      return context.result;
+    onAfterResponse: (context) => {
+      console.log(`<- [${context.method.toUpperCase()}] ${context.url}`, context.response);
     }
   }),
   withMethods(({ delegate }) => ({
@@ -210,8 +203,7 @@ const client = universalClient(
 
   // Authentication interceptor
   withInterceptor({
-    name: 'auth',
-    before: (context) => ({
+    onBeforeRequest: (context) => ({
       headers: {
         ...context.headers,
         Authorization: `Bearer ${getToken()}`
@@ -221,14 +213,12 @@ const client = universalClient(
 
   // Date conversion interceptor
   withInterceptor({
-    name: 'dateConverter',
-    after: (context) => convertDatesToObjects(context.result)
+    onAfterResponse: (context) => convertDatesToObjects(context.response)
   }),
 
   // Error logging interceptor
   withInterceptor({
-    name: 'log',
-    error: (method, url, error) => {
+    onError: (method, url, error) => {
       logError(method, url, error);
     }
   }),
@@ -250,6 +240,84 @@ function convertDatesToObjects(data: any) {
 function logError(method: string, url: string, error: Error) {
   console.error(`[${method}] ${url}:`, error);
 }
+```
+
+## SSE Interceptors
+
+You can intercept Server-Sent Event lifecycle methods:
+
+```typescript
+import { universalClient, withDelegate, withInterceptor, withMethods } from 'universal-client';
+
+const client = universalClient(
+  withDelegate({ type: 'sse', url: 'https://api.example.com/events' }),
+  withInterceptor({
+    beforeOpen: (options) => {
+      console.log('Opening SSE connection...', options);
+    },
+    afterOpen: () => {
+      console.log('SSE connection established');
+    },
+    beforeClose: () => {
+      console.log('Closing SSE connection...');
+    },
+    afterClose: () => {
+      console.log('SSE connection closed');
+    },
+    onError: (error) => {
+      console.error('SSE error:', error);
+    },
+    onMessage: (data) => {
+      console.log('SSE message received:', data);
+    }
+  }),
+  withMethods(({ delegate }) => ({
+    connect: () => delegate.open(),
+    disconnect: () => delegate.close(),
+    onMessage: (callback: (data: unknown) => void) => delegate.onMessage(callback),
+  }))
+);
+```
+
+## WebSocket Interceptors
+
+You can intercept WebSocket lifecycle methods:
+
+```typescript
+import { universalClient, withDelegate, withInterceptor, withMethods } from 'universal-client';
+
+const client = universalClient(
+  withDelegate({ type: 'websocket', url: 'wss://echo.websocket.org' }),
+  withInterceptor({
+    beforeConnect: () => {
+      console.log('Connecting to WebSocket...');
+    },
+    afterConnect: () => {
+      console.log('WebSocket connected');
+    },
+    beforeSend: (message) => {
+      console.log('Sending:', message);
+    },
+    afterSend: (message) => {
+      console.log('Sent:', message);
+    },
+    beforeClose: () => {
+      console.log('Closing WebSocket...');
+    },
+    afterClose: () => {
+      console.log('WebSocket closed');
+    },
+    onError: (error) => {
+      console.error('WebSocket error:', error);
+    }
+  }),
+  withMethods(({ delegate }) => ({
+    connect: () => delegate.connect(),
+    disconnect: () => delegate.close(),
+    send: (message: string) => delegate.send(message),
+    onMessage: (callback: (data: unknown) => void) => delegate.onMessage(callback),
+  }))
+);
 ```
 
 ## Real-World Example: API Client with All Features
@@ -302,8 +370,7 @@ const apiClient = universalClient(
 
   // Authentication interceptor
   withInterceptor({
-    name: 'auth',
-    before: (context: RequestInterceptorContext) => {
+    onBeforeRequest: (context: RequestInterceptorContext) => {
       const token = localStorage.getItem('authToken');
       if (token) {
         return {
@@ -319,16 +386,14 @@ const apiClient = universalClient(
 
   // Response transformation interceptor
   withInterceptor({
-    name: 'dateConverter',
-    after: <T>(context: ResponseInterceptorContext<T>) => {
-      return convertISODatesToObjects(context.result);
+    onAfterResponse: <T>(context: ResponseInterceptorContext<T>) => {
+      return convertISODatesToObjects(context.response);
     }
   }),
 
   // Error handling interceptor
   withInterceptor({
-    name: 'errorHandler',
-    error: (method, url, error) => {
+    onError: (method, url, error) => {
       if (error.message.includes('401')) {
         localStorage.removeItem('authToken');
         window.location.href = '/login';
@@ -362,7 +427,9 @@ console.log('API Metrics:', metrics);
 
 ## TypeScript Types
 
-The interceptor uses these types:
+The interceptors use these types:
+
+### HTTP Interceptor
 
 ```typescript
 interface RequestInterceptorContext {
@@ -375,14 +442,41 @@ interface RequestInterceptorContext {
 interface ResponseInterceptorContext<T = unknown> {
   method: string;
   url: string;
-  result: T;
-  body?: unknown;
+  response: T;
 }
 
 interface HttpInterceptor {
-  before?: (context: RequestInterceptorContext) =>
-    void | Partial<RequestInterceptorContext> | Promise<void | Partial<RequestInterceptorContext>>;
-  after?: <T>(context: ResponseInterceptorContext<T>) => T | Promise<T>;
-  error?: (method: string, url: string, error: Error, body?: unknown) => void | Promise<void>;
+  onBeforeRequest?: (context: RequestInterceptorContext) =>
+    undefined | Partial<RequestInterceptorContext> | Promise<Partial<RequestInterceptorContext> | undefined>;
+  onAfterResponse?: <T>(context: ResponseInterceptorContext<T>) =>
+    undefined | Partial<T> | Promise<Partial<T> | undefined>;
+  onError?: (method: string, url: string, error: Error, body?: unknown) => void | Promise<void>;
+}
+```
+
+### SSE Interceptor
+
+```typescript
+interface ServerSentEventInterceptor {
+  beforeOpen?: (options?: SseOpenOptions) => void | Promise<void>;
+  afterOpen?: (options?: SseOpenOptions) => void | Promise<void>;
+  beforeClose?: () => void | Promise<void>;
+  afterClose?: () => void | Promise<void>;
+  onError?: (error: Error) => void | Promise<void>;
+  onMessage?: (data: unknown) => void | Promise<void>;
+}
+```
+
+### WebSocket Interceptor
+
+```typescript
+interface WebSocketInterceptor {
+  beforeConnect?: () => void | Promise<void>;
+  afterConnect?: () => void | Promise<void>;
+  beforeSend?: (message: unknown) => void | Promise<void>;
+  afterSend?: (message: unknown) => void | Promise<void>;
+  beforeClose?: () => void | Promise<void>;
+  afterClose?: () => void | Promise<void>;
+  onError?: (error: Error) => void | Promise<void>;
 }
 ```

@@ -119,6 +119,31 @@ chatClient.joinRoom('general', user);
 chatClient.sendChatMessage(user, 'Hello everyone!');
 ```
 
+### With Interceptors
+
+```typescript
+import { universalClient, withDelegate, withInterceptor, withMethods } from 'universal-client';
+
+const wsClient = universalClient(
+  withDelegate({ type: 'websocket', url: 'wss://echo.websocket.org' }),
+  withInterceptor({
+    beforeConnect: () => console.log('Connecting...'),
+    afterConnect: () => console.log('Connected'),
+    beforeSend: (message) => console.log('Sending:', message),
+    afterSend: (message) => console.log('Sent:', message),
+    beforeClose: () => console.log('Closing...'),
+    afterClose: () => console.log('Closed'),
+    onError: (error) => console.error('WS error:', error),
+  }),
+  withMethods(({ delegate }) => ({
+    connect: () => delegate.connect(),
+    disconnect: () => delegate.close(),
+    send: (message: string) => delegate.send(message),
+    onMessage: (callback: (data: unknown) => void) => delegate.onMessage(callback),
+  })),
+);
+```
+
 ### With Telemetry
 
 ```typescript

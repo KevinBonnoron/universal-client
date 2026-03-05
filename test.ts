@@ -4,7 +4,7 @@ const withHttpDelegate = (baseURL: string) =>
   withDelegate(
     { type: 'http', impl: 'fetch', baseURL },
     withInterceptor({
-      before: (context) => {
+      onBeforeRequest: (context) => {
         return {
           ...context,
           headers: {

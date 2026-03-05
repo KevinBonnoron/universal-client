@@ -62,7 +62,7 @@ function wrapHttpDelegateWithEnvironments<Environment extends Environments>(dele
   };
 
   return wrapHttpDelegate(delegate, {
-    before: (context) => {
+    onBeforeRequest: (context) => {
       return { url: buildFullURL(context.url) };
     },
   });
