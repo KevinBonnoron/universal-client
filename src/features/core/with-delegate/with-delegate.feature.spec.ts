@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
 import type { Delegate } from '../../../types';
-import { withDelegate } from './with-delegate.feature';
+import { withDelegate, withFetchDelegate, withHttpDelegate, withSseDelegate, withWebSocketDelegate } from './with-delegate.feature';
 
 describe('withDelegate', () => {
   it('should create delegate feature with default name', () => {
@@ -229,5 +229,132 @@ describe('withDelegate', () => {
     expect(result.middleware2).toBe(true);
     // @ts-expect-error - middleware3 is added by the mock feature
     expect(result.middleware3).toBe(true);
+  });
+});
+
+describe('withFetchDelegate', () => {
+  it('should create fetch delegate with baseURL only', () => {
+    const feature = withFetchDelegate('https://api.example.com');
+    const result = feature({});
+
+    expect(result.delegate).toBeDefined();
+    expect(typeof result.delegate.get).toBe('function');
+    expect(typeof result.delegate.post).toBe('function');
+  });
+
+  it('should create fetch delegate with custom name', () => {
+    const feature = withFetchDelegate('https://api.example.com', 'api');
+    const result = feature({});
+
+    expect(result.api).toBeDefined();
+    expect(typeof result.api.get).toBe('function');
+  });
+
+  it('should accept delegate features without options', () => {
+    const mockFeature = mock((input: { delegate: Delegate }) => ({
+      ...input,
+      enhanced: true,
+    }));
+
+    const feature = withFetchDelegate('https://api.example.com', mockFeature);
+    const result = feature({}) as Record<string, unknown>;
+
+    expect(mockFeature).toHaveBeenCalled();
+    expect(result.delegate).toBeDefined();
+    expect(result.enhanced).toBe(true);
+  });
+
+  it('should accept name and delegate features', () => {
+    const mockFeature = mock((input: { delegate: Delegate }) => ({
+      ...input,
+      enhanced: true,
+    }));
+
+    const feature = withFetchDelegate('https://api.example.com', 'api', mockFeature);
+    const result = feature({}) as Record<string, unknown>;
+
+    expect(mockFeature).toHaveBeenCalled();
+    expect(result.api).toBeDefined();
+    expect(result.enhanced).toBe(true);
+  });
+});
+
+describe('withHttpDelegate', () => {
+  it('should create http delegate with impl option', () => {
+    const feature = withHttpDelegate('https://api.example.com', { impl: 'fetch' });
+    const result = feature({});
+
+    expect(result.delegate).toBeDefined();
+    expect(typeof result.delegate.get).toBe('function');
+  });
+
+  it('should create http delegate with custom name', () => {
+    const feature = withHttpDelegate('https://api.example.com', { impl: 'fetch', name: 'api' });
+    const result = feature({});
+
+    expect(result.api).toBeDefined();
+    expect(typeof result.api.get).toBe('function');
+  });
+});
+
+describe('withSseDelegate', () => {
+  it('should create SSE delegate with baseURL only', () => {
+    // @ts-expect-error - EventSource mock for testing
+    global.EventSource = mock(() => ({}));
+
+    const feature = withSseDelegate('http://localhost:8080/events');
+    const result = feature({});
+
+    expect(result.delegate).toBeDefined();
+    expect(typeof result.delegate.open).toBe('function');
+    expect(typeof result.delegate.onMessage).toBe('function');
+  });
+
+  it('should create SSE delegate with custom name', () => {
+    // @ts-expect-error - EventSource mock for testing
+    global.EventSource = mock(() => ({}));
+
+    const feature = withSseDelegate('http://localhost:8080/events', 'events');
+    const result = feature({});
+
+    expect(result.events).toBeDefined();
+    expect(typeof result.events.open).toBe('function');
+  });
+});
+
+describe('withWebSocketDelegate', () => {
+  it('should create WebSocket delegate with baseURL only', () => {
+    // @ts-expect-error - WebSocket mock for testing
+    global.WebSocket = mock(() => ({}));
+
+    const feature = withWebSocketDelegate('ws://localhost:8080');
+    const result = feature({});
+
+    expect(result.delegate).toBeDefined();
+    expect(typeof result.delegate.connect).toBe('function');
+    expect(typeof result.delegate.send).toBe('function');
+    expect(typeof result.delegate.close).toBe('function');
+  });
+
+  it('should create WebSocket delegate with string name', () => {
+    // @ts-expect-error - WebSocket mock for testing
+    global.WebSocket = mock(() => ({}));
+
+    const feature = withWebSocketDelegate('ws://localhost:8080', 'ws');
+    const result = feature({});
+
+    expect(result.ws).toBeDefined();
+    expect(typeof result.ws.connect).toBe('function');
+  });
+
+  it('should create WebSocket delegate with options object', () => {
+    // @ts-expect-error - WebSocket mock for testing
+    global.WebSocket = mock(() => ({}));
+
+    const feature = withWebSocketDelegate('ws://localhost:8080', { name: 'ws', protocols: ['v1'] });
+    const result = feature({});
+
+    expect(result.ws).toBeDefined();
+    expect(typeof result.ws.connect).toBe('function');
   });
 });

@@ -46,7 +46,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/api${context.url}`,
           }),
@@ -75,7 +74,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onAfterResponse: ({ response }) => ({
             ...response,
             createdAt: new Date((response as UserResponse).createdAt || ''),
@@ -99,7 +97,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/v1${context.url}`,
           }),
@@ -126,7 +123,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: () => ({
             headers: { Authorization: 'Bearer token123' },
           }),
@@ -161,7 +157,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onError: (method: string, url: string, error: Error) => {
             errorHandler(method, url, error.message);
           },
@@ -183,7 +178,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/api${context.url}`,
           }),
@@ -205,7 +199,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             body: {
               ...(context.body as object),
@@ -246,7 +239,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onAfterResponse: ({ response }) => ({
             ...response,
             createdAt: new Date((response as UserResponse).createdAt || ''),
@@ -270,7 +262,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/v1${context.url}`,
             body: context.body ? { ...context.body, version: 'v1' } : undefined,
@@ -305,7 +296,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: () => ({
             headers: { Authorization: 'Bearer token123' },
           }),
@@ -341,7 +331,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onError: (method: string, url: string, error: Error) => {
             errorHandler(method, url, error.message);
           },
@@ -363,7 +352,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/api${context.url}`,
           }),
@@ -385,7 +373,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             body: {
               ...(context.body as object),
@@ -425,7 +412,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onAfterResponse: ({ response }) => ({
             ...response,
             updatedAt: new Date((response as UserResponse).updatedAt || ''),
@@ -449,7 +435,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/v1${context.url}`,
             body: context.body ? { ...context.body, version: 'v1' } : undefined,
@@ -484,7 +469,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: () => ({
             headers: { Authorization: 'Bearer token123' },
           }),
@@ -520,7 +504,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onError: (method: string, url: string, error: Error) => {
             errorHandler(method, url, error.message);
           },
@@ -542,7 +525,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/api${context.url}`,
           }),
@@ -564,7 +546,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             body: {
               ...(context.body as object),
@@ -604,7 +585,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onAfterResponse: ({ response }) => ({
             ...response,
             replacedAt: new Date((response as UserResponse).replacedAt || ''),
@@ -628,7 +608,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/v1${context.url}`,
             body: context.body ? { ...context.body, version: 'v1' } : undefined,
@@ -663,7 +642,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: () => ({
             headers: { Authorization: 'Bearer token123' },
           }),
@@ -699,7 +677,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onError: (method: string, url: string, error: Error) => {
             errorHandler(method, url, error.message);
           },
@@ -721,7 +698,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/api${context.url}`,
           }),
@@ -750,7 +726,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onAfterResponse: ({ response }) => ({
             ...response,
             deletedAt: new Date((response as UserResponse).deletedAt || ''),
@@ -774,7 +749,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: (context: RequestInterceptorContext) => ({
             url: `/v1${context.url}`,
           }),
@@ -801,7 +775,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onBeforeRequest: () => ({
             headers: { Authorization: 'Bearer token123' },
           }),
@@ -836,7 +809,6 @@ describe('withInterceptor', () => {
       const client = universalClient(
         () => ({ delegate: mockDelegate }),
         withInterceptor({
-
           onError: (method: string, url: string, error: Error) => {
             errorHandler(method, url, error.message);
           },
@@ -866,10 +838,7 @@ describe('withInterceptor', () => {
       const afterOpen = mock(() => {});
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(
-        () => ({ delegate: mockSseDelegate }),
-        withInterceptor({beforeOpen, afterOpen }),
-      );
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ beforeOpen, afterOpen }));
 
       (client.delegate as ReturnType<typeof createMockSseDelegate>).open({ url: '/events' });
 
@@ -883,10 +852,7 @@ describe('withInterceptor', () => {
       const afterClose = mock(() => {});
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(
-        () => ({ delegate: mockSseDelegate }),
-        withInterceptor({beforeClose, afterClose }),
-      );
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ beforeClose, afterClose }));
 
       (client.delegate as ReturnType<typeof createMockSseDelegate>).close();
 
@@ -899,10 +865,7 @@ describe('withInterceptor', () => {
       const onErrorInterceptor = mock((_error: unknown) => {});
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(
-        () => ({ delegate: mockSseDelegate }),
-        withInterceptor({onError: onErrorInterceptor }),
-      );
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ onError: onErrorInterceptor }));
 
       const userCallback = mock((_event: Event) => {});
       (client.delegate as ReturnType<typeof createMockSseDelegate>).onError(userCallback);
@@ -921,10 +884,7 @@ describe('withInterceptor', () => {
       const onMessageInterceptor = mock((_data: unknown) => {});
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(
-        () => ({ delegate: mockSseDelegate }),
-        withInterceptor({onMessage: onMessageInterceptor }),
-      );
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ onMessage: onMessageInterceptor }));
 
       const userCallback = mock((_data: unknown) => {});
       (client.delegate as ReturnType<typeof createMockSseDelegate>).onMessage(userCallback);
@@ -939,10 +899,7 @@ describe('withInterceptor', () => {
     it('should preserve onOpen and subscribe without interception', () => {
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(
-        () => ({ delegate: mockSseDelegate }),
-        withInterceptor({beforeOpen: () => {} }),
-      );
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ beforeOpen: () => {} }));
 
       const delegate = client.delegate as ReturnType<typeof createMockSseDelegate>;
       delegate.onOpen(() => {});
@@ -966,10 +923,7 @@ describe('withInterceptor', () => {
         onMessage: () => () => {},
       };
 
-      const client = universalClient(
-        () => ({ delegate: mockWebSocketDelegate }),
-        withInterceptor({beforeConnect }),
-      );
+      const client = universalClient(() => ({ delegate: mockWebSocketDelegate }), withInterceptor({ beforeConnect }));
 
       (client.delegate as typeof mockWebSocketDelegate).connect();
 

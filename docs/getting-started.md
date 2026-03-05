@@ -41,9 +41,9 @@ deno add @kevinbonnoron/universal-client
 import { universalClient, withFetchDelegate, withMethods } from 'universal-client';
 
 const client = universalClient(
-  withFetchDelegate({ baseURL: 'https://jsonplaceholder.typicode.com' }),
-  // withBetterFetchDelegate({ baseURL: 'https://jsonplaceholder.typicode.com' }),
-  // withAxiosDelegate({ baseURL: 'https://jsonplaceholder.typicode.com' }),
+  withFetchDelegate('https://jsonplaceholder.typicode.com'),
+  // withBetterFetchDelegate('https://jsonplaceholder.typicode.com'),
+  // withAxiosDelegate('https://jsonplaceholder.typicode.com'),
   withMethods(({ delegate }) => ({
     getUser: (id: string) => delegate.get(`/users/${id}`),
   })),
