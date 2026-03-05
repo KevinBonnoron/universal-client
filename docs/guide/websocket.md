@@ -127,12 +127,12 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const wsClient = universalClient(
   withDelegate({ type: 'websocket', url: 'wss://echo.websocket.org' }),
   withInterceptor({
-    beforeConnect: () => console.log('Connecting...'),
-    afterConnect: () => console.log('Connected'),
-    beforeSend: (message) => console.log('Sending:', message),
-    afterSend: (message) => console.log('Sent:', message),
-    beforeClose: () => console.log('Closing...'),
-    afterClose: () => console.log('Closed'),
+    onBeforeConnect: () => console.log('Connecting...'),
+    onAfterConnect: () => console.log('Connected'),
+    onBeforeSend: (message) => console.log('Sending:', message),
+    onAfterSend: (message) => console.log('Sent:', message),
+    onBeforeClose: () => console.log('Closing...'),
+    onAfterClose: () => console.log('Closed'),
     onError: (error) => console.error('WS error:', error),
   }),
   withMethods(({ delegate }) => ({

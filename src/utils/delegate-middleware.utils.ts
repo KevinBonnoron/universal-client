@@ -62,38 +62,38 @@ export function wrapWebSocketDelegate(delegate: WebSocketDelegate, interceptor: 
   return {
     ...delegate,
     connect: () => {
-      if (interceptor.beforeConnect) {
-        Promise.resolve(interceptor.beforeConnect()).catch(console.error);
+      if (interceptor.onBeforeConnect) {
+        Promise.resolve(interceptor.onBeforeConnect()).catch(console.error);
       }
 
       delegate.connect();
 
-      if (interceptor.afterConnect) {
-        Promise.resolve(interceptor.afterConnect()).catch(console.error);
+      if (interceptor.onAfterConnect) {
+        Promise.resolve(interceptor.onAfterConnect()).catch(console.error);
       }
     },
 
     send: (message: unknown) => {
-      if (interceptor.beforeSend) {
-        Promise.resolve(interceptor.beforeSend(message)).catch(console.error);
+      if (interceptor.onBeforeSend) {
+        Promise.resolve(interceptor.onBeforeSend(message)).catch(console.error);
       }
 
       delegate.send(message);
 
-      if (interceptor.afterSend) {
-        Promise.resolve(interceptor.afterSend(message)).catch(console.error);
+      if (interceptor.onAfterSend) {
+        Promise.resolve(interceptor.onAfterSend(message)).catch(console.error);
       }
     },
 
     close: () => {
-      if (interceptor.beforeClose) {
-        Promise.resolve(interceptor.beforeClose()).catch(console.error);
+      if (interceptor.onBeforeClose) {
+        Promise.resolve(interceptor.onBeforeClose()).catch(console.error);
       }
 
       delegate.close();
 
-      if (interceptor.afterClose) {
-        Promise.resolve(interceptor.afterClose()).catch(console.error);
+      if (interceptor.onAfterClose) {
+        Promise.resolve(interceptor.onAfterClose()).catch(console.error);
       }
     },
   };
@@ -105,27 +105,31 @@ export function wrapWebSocketDelegate(delegate: WebSocketDelegate, interceptor: 
 export function wrapServerSentEventDelegate(delegate: ServerSentEventDelegate, interceptor: ServerSentEventInterceptor): ServerSentEventDelegate {
   return {
     ...delegate,
-    open: (options?: SseOpenOptions) => {
-      if (interceptor.beforeOpen) {
-        Promise.resolve(interceptor.beforeOpen(options)).catch(console.error);
+    open: async (options?: SseOpenOptions) => {
+      let resolvedOptions = options;
+      if (interceptor.onBeforeOpen) {
+        const beforeResult = await interceptor.onBeforeOpen(resolvedOptions);
+        if (beforeResult && typeof beforeResult === 'object') {
+          resolvedOptions = { ...resolvedOptions, ...beforeResult };
+        }
       }
 
-      delegate.open(options);
+      delegate.open(resolvedOptions);
 
-      if (interceptor.afterOpen) {
-        Promise.resolve(interceptor.afterOpen(options)).catch(console.error);
+      if (interceptor.onAfterOpen) {
+        Promise.resolve(interceptor.onAfterOpen(resolvedOptions)).catch(console.error);
       }
     },
 
     close: () => {
-      if (interceptor.beforeClose) {
-        Promise.resolve(interceptor.beforeClose()).catch(console.error);
+      if (interceptor.onBeforeClose) {
+        Promise.resolve(interceptor.onBeforeClose()).catch(console.error);
       }
 
       delegate.close();
 
-      if (interceptor.afterClose) {
-        Promise.resolve(interceptor.afterClose()).catch(console.error);
+      if (interceptor.onAfterClose) {
+        Promise.resolve(interceptor.onAfterClose()).catch(console.error);
       }
     },
 

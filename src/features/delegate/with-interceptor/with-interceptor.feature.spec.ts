@@ -833,32 +833,43 @@ describe('withInterceptor', () => {
       subscribe: mock((_event: string, _cb: (data: unknown) => void) => () => {}),
     });
 
-    it('should call beforeOpen and afterOpen interceptors on open', () => {
-      const beforeOpen = mock(() => {});
-      const afterOpen = mock(() => {});
+    it('should call onBeforeOpen and onAfterOpen interceptors on open', async () => {
+      const onBeforeOpen = mock(() => undefined);
+      const onAfterOpen = mock(() => {});
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ beforeOpen, afterOpen }));
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ onBeforeOpen, onAfterOpen }));
 
-      (client.delegate as ReturnType<typeof createMockSseDelegate>).open({ url: '/events' });
+      await (client.delegate as ReturnType<typeof createMockSseDelegate>).open({ url: '/events' });
 
-      expect(beforeOpen).toHaveBeenCalledWith({ url: '/events' });
+      expect(onBeforeOpen).toHaveBeenCalledWith({ url: '/events' });
       expect(mockSseDelegate.open).toHaveBeenCalledWith({ url: '/events' });
-      expect(afterOpen).toHaveBeenCalledWith({ url: '/events' });
+      expect(onAfterOpen).toHaveBeenCalledWith({ url: '/events' });
     });
 
-    it('should call beforeClose and afterClose interceptors on close', () => {
-      const beforeClose = mock(() => {});
-      const afterClose = mock(() => {});
+    it('should apply modified options from onBeforeOpen', async () => {
+      const onBeforeOpen = mock(() => ({ url: '/modified-events' }));
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ beforeClose, afterClose }));
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ onBeforeOpen }));
+
+      await (client.delegate as ReturnType<typeof createMockSseDelegate>).open({ url: '/events' });
+
+      expect(mockSseDelegate.open).toHaveBeenCalledWith({ url: '/modified-events' });
+    });
+
+    it('should call onBeforeClose and onAfterClose interceptors on close', () => {
+      const onBeforeClose = mock(() => {});
+      const onAfterClose = mock(() => {});
+      const mockSseDelegate = createMockSseDelegate();
+
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ onBeforeClose, onAfterClose }));
 
       (client.delegate as ReturnType<typeof createMockSseDelegate>).close();
 
-      expect(beforeClose).toHaveBeenCalled();
+      expect(onBeforeClose).toHaveBeenCalled();
       expect(mockSseDelegate.close).toHaveBeenCalled();
-      expect(afterClose).toHaveBeenCalled();
+      expect(onAfterClose).toHaveBeenCalled();
     });
 
     it('should intercept onError events and convert Event to Error', () => {
@@ -899,7 +910,7 @@ describe('withInterceptor', () => {
     it('should preserve onOpen and subscribe without interception', () => {
       const mockSseDelegate = createMockSseDelegate();
 
-      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ beforeOpen: () => {} }));
+      const client = universalClient(() => ({ delegate: mockSseDelegate }), withInterceptor({ onBeforeOpen: () => undefined }));
 
       const delegate = client.delegate as ReturnType<typeof createMockSseDelegate>;
       delegate.onOpen(() => {});
@@ -912,7 +923,7 @@ describe('withInterceptor', () => {
 
   describe('WebSocket delegates', () => {
     it('should wrap WebSocket delegate with interceptors', () => {
-      const beforeConnect = mock(() => {});
+      const onBeforeConnect = mock(() => {});
       const mockWebSocketDelegate = {
         connect: mock(() => {}),
         close: mock(() => {}),
@@ -923,11 +934,11 @@ describe('withInterceptor', () => {
         onMessage: () => () => {},
       };
 
-      const client = universalClient(() => ({ delegate: mockWebSocketDelegate }), withInterceptor({ beforeConnect }));
+      const client = universalClient(() => ({ delegate: mockWebSocketDelegate }), withInterceptor({ onBeforeConnect }));
 
       (client.delegate as typeof mockWebSocketDelegate).connect();
 
-      expect(beforeConnect).toHaveBeenCalled();
+      expect(onBeforeConnect).toHaveBeenCalled();
       expect(mockWebSocketDelegate.connect).toHaveBeenCalled();
     });
   });

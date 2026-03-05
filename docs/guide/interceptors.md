@@ -252,16 +252,16 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'sse', url: 'https://api.example.com/events' }),
   withInterceptor({
-    beforeOpen: (options) => {
+    onBeforeOpen: (options) => {
       console.log('Opening SSE connection...', options);
     },
-    afterOpen: () => {
+    onAfterOpen: () => {
       console.log('SSE connection established');
     },
-    beforeClose: () => {
+    onBeforeClose: () => {
       console.log('Closing SSE connection...');
     },
-    afterClose: () => {
+    onAfterClose: () => {
       console.log('SSE connection closed');
     },
     onError: (error) => {
@@ -289,22 +289,22 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const client = universalClient(
   withDelegate({ type: 'websocket', url: 'wss://echo.websocket.org' }),
   withInterceptor({
-    beforeConnect: () => {
+    onBeforeConnect: () => {
       console.log('Connecting to WebSocket...');
     },
-    afterConnect: () => {
+    onAfterConnect: () => {
       console.log('WebSocket connected');
     },
-    beforeSend: (message) => {
+    onBeforeSend: (message) => {
       console.log('Sending:', message);
     },
-    afterSend: (message) => {
+    onAfterSend: (message) => {
       console.log('Sent:', message);
     },
-    beforeClose: () => {
+    onBeforeClose: () => {
       console.log('Closing WebSocket...');
     },
-    afterClose: () => {
+    onAfterClose: () => {
       console.log('WebSocket closed');
     },
     onError: (error) => {
@@ -458,10 +458,10 @@ interface HttpInterceptor {
 
 ```typescript
 interface ServerSentEventInterceptor {
-  beforeOpen?: (options?: SseOpenOptions) => void | Promise<void>;
-  afterOpen?: (options?: SseOpenOptions) => void | Promise<void>;
-  beforeClose?: () => void | Promise<void>;
-  afterClose?: () => void | Promise<void>;
+  onBeforeOpen?: (options?: SseOpenOptions) => undefined | Partial<SseOpenOptions> | Promise<Partial<SseOpenOptions> | undefined>;
+  onAfterOpen?: (options?: SseOpenOptions) => void | Promise<void>;
+  onBeforeClose?: () => void | Promise<void>;
+  onAfterClose?: () => void | Promise<void>;
   onError?: (error: Error) => void | Promise<void>;
   onMessage?: (data: unknown) => void | Promise<void>;
 }
@@ -471,12 +471,12 @@ interface ServerSentEventInterceptor {
 
 ```typescript
 interface WebSocketInterceptor {
-  beforeConnect?: () => void | Promise<void>;
-  afterConnect?: () => void | Promise<void>;
-  beforeSend?: (message: unknown) => void | Promise<void>;
-  afterSend?: (message: unknown) => void | Promise<void>;
-  beforeClose?: () => void | Promise<void>;
-  afterClose?: () => void | Promise<void>;
+  onBeforeConnect?: () => void | Promise<void>;
+  onAfterConnect?: () => void | Promise<void>;
+  onBeforeSend?: (message: unknown) => void | Promise<void>;
+  onAfterSend?: (message: unknown) => void | Promise<void>;
+  onBeforeClose?: () => void | Promise<void>;
+  onAfterClose?: () => void | Promise<void>;
   onError?: (error: Error) => void | Promise<void>;
 }
 ```

@@ -32,12 +32,12 @@ export interface HttpInterceptor {
  * Interceptor for WebSocket delegate methods
  */
 export interface WebSocketInterceptor {
-  beforeConnect?: () => void | Promise<void>;
-  afterConnect?: () => void | Promise<void>;
-  beforeSend?: (message: unknown) => void | Promise<void>;
-  afterSend?: (message: unknown) => void | Promise<void>;
-  beforeClose?: () => void | Promise<void>;
-  afterClose?: () => void | Promise<void>;
+  onBeforeConnect?: () => void | Promise<void>;
+  onAfterConnect?: () => void | Promise<void>;
+  onBeforeSend?: (message: unknown) => void | Promise<void>;
+  onAfterSend?: (message: unknown) => void | Promise<void>;
+  onBeforeClose?: () => void | Promise<void>;
+  onAfterClose?: () => void | Promise<void>;
   onError?: (error: Error) => void | Promise<void>;
 }
 
@@ -45,10 +45,10 @@ export interface WebSocketInterceptor {
  * Interceptor for Server-Sent Event delegate methods
  */
 export interface ServerSentEventInterceptor {
-  beforeOpen?: (options?: SseOpenOptions) => void | Promise<void>;
-  afterOpen?: (options?: SseOpenOptions) => void | Promise<void>;
-  beforeClose?: () => void | Promise<void>;
-  afterClose?: () => void | Promise<void>;
+  onBeforeOpen?: (options?: SseOpenOptions) => undefined | Partial<SseOpenOptions> | Promise<Partial<SseOpenOptions> | undefined>;
+  onAfterOpen?: (options?: SseOpenOptions) => void | Promise<void>;
+  onBeforeClose?: () => void | Promise<void>;
+  onAfterClose?: () => void | Promise<void>;
   onError?: (error: Error) => void | Promise<void>;
   onMessage?: (data: unknown) => void | Promise<void>;
 }

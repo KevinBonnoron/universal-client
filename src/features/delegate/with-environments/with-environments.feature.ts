@@ -70,7 +70,7 @@ function wrapHttpDelegateWithEnvironments<Environment extends Environments>(dele
 
 function wrapWebSocketDelegateWithEnvironments<Environment extends Environments>(delegate: WebSocketDelegate, envManager: EnvironmentManager<Environment>): WebSocketDelegate {
   return wrapWebSocketDelegate(delegate, {
-    beforeConnect: () => {
+    onBeforeConnect: () => {
       console.info(`[ENVIRONMENTS] WebSocket connecting to: ${envManager.getBaseURL()}`);
     },
   });

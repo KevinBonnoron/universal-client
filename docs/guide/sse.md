@@ -136,10 +136,10 @@ import { universalClient, withDelegate, withInterceptor, withMethods } from 'uni
 const sseClient = universalClient(
   withDelegate({ type: 'sse', url: 'https://your-sse-server.com/events' }),
   withInterceptor({
-    beforeOpen: () => console.log('Opening SSE connection...'),
-    afterOpen: () => console.log('SSE connection established'),
-    beforeClose: () => console.log('Closing SSE connection...'),
-    afterClose: () => console.log('SSE connection closed'),
+    onBeforeOpen: () => console.log('Opening SSE connection...'),
+    onAfterOpen: () => console.log('SSE connection established'),
+    onBeforeClose: () => console.log('Closing SSE connection...'),
+    onAfterClose: () => console.log('SSE connection closed'),
     onError: (error) => console.error('SSE error:', error),
     onMessage: (data) => console.log('Message intercepted:', data),
   }),
