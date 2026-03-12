@@ -95,15 +95,15 @@ describe('createServerSentEventDelegate', () => {
       expect(mockESConstructor).toHaveBeenCalledWith('http://localhost/events');
     });
 
-    it('should create EventSource connection to custom URL', async () => {
+    it('should create EventSource connection to baseURL + custom URL', async () => {
       const mockESConstructor = mock(() => createMockEventSource());
       // @ts-expect-error - EventSource mock
       globalThis.EventSource = mockESConstructor;
 
-      const delegate = await createServerSentEventDelegate({ baseURL: 'http://localhost/events' });
-      delegate.open({ url: 'http://other/stream' });
+      const delegate = await createServerSentEventDelegate({ baseURL: 'http://localhost' });
+      delegate.open({ url: '/stream' });
 
-      expect(mockESConstructor).toHaveBeenCalledWith('http://other/stream');
+      expect(mockESConstructor).toHaveBeenCalledWith('http://localhost/stream');
     });
 
     it('should throw if EventSource is not available', async () => {
@@ -320,11 +320,11 @@ describe('createServerSentEventDelegate', () => {
       expect(statuses).toEqual(['{"type":"done"}']);
     });
 
-    it('should use custom URL when provided', async () => {
+    it('should use baseURL + custom URL when provided', async () => {
       const { calls } = mockFetch(() => createMockSseResponse(['data: ok\n\n']));
 
-      const delegate = await createServerSentEventDelegate({ baseURL: 'http://localhost/default' });
-      delegate.open({ method: 'POST', body: {}, url: 'http://localhost/custom' });
+      const delegate = await createServerSentEventDelegate({ baseURL: 'http://localhost' });
+      delegate.open({ method: 'POST', body: {}, url: '/custom' });
 
       await Bun.sleep(10);
 

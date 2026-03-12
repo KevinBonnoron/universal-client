@@ -129,11 +129,10 @@ export async function createServerSentEventDelegate({ baseURL }: CreateServerSen
   }
 
   return {
-    open(options?: SseOpenOptions): void {
+    open({ url: path, method = 'GET', headers, body }: SseOpenOptions = {}): void {
       closeExisting();
 
-      const url = options?.url ?? baseURL;
-      const method = options?.method ?? 'GET';
+      const url = path ? `${baseURL}${path}` : baseURL;
 
       if (method === 'GET') {
         if (typeof EventSource === 'undefined') {
@@ -141,7 +140,6 @@ export async function createServerSentEventDelegate({ baseURL }: CreateServerSen
         }
 
         eventSource = new EventSource(url);
-
         eventSource.addEventListener('open', (event) => {
           for (const listener of openListeners) {
             listener(event);
@@ -174,13 +172,13 @@ export async function createServerSentEventDelegate({ baseURL }: CreateServerSen
           headers: {
             Accept: 'text/event-stream',
             'Content-Type': 'application/json',
-            ...options?.headers,
+            ...headers,
           },
           signal: abortController.signal,
         };
 
-        if (options?.body !== undefined) {
-          requestInit.body = JSON.stringify(options.body);
+        if (body !== undefined) {
+          requestInit.body = JSON.stringify(body);
         }
 
         fetch(url, requestInit)
