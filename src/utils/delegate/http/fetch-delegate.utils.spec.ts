@@ -304,7 +304,7 @@ describe('createFetchDelegate', () => {
     });
 
     describe('with different response formats', () => {
-      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'blob' as const }, { format: 'raw' as const }, { format: undefined }])('should throw error with format=$format', async ({ format }) => {
+      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'blob' as const }, { format: undefined }])('should throw error with format=$format', async ({ format }) => {
         const mockResponse = new Response(JSON.stringify({ error: 'Server error' }), {
           status: 500,
           statusText: 'Internal Server Error',
@@ -314,6 +314,21 @@ describe('createFetchDelegate', () => {
         const delegate = createFetchDelegate({ baseURL });
 
         await expect(delegate.get('/users', { format })).rejects.toThrow('Server error');
+      });
+
+      it('should return the Response on HTTP error when format=raw', async () => {
+        const mockResponse = new Response(JSON.stringify({ error: 'Server error' }), {
+          status: 500,
+          statusText: 'Internal Server Error',
+        });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const delegate = createFetchDelegate({ baseURL });
+        const result = await delegate.get<Response>('/users', { format: 'raw' });
+
+        expect(result).toBeInstanceOf(Response);
+        expect(result.status).toBe(500);
+        expect(await result.json()).toEqual({ error: 'Server error' });
       });
     });
   });

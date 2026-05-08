@@ -21,6 +21,10 @@ function detectFormat(response: Response): HttpRequestOptions['format'] {
 
 function parseResponse(format: HttpRequestOptions['format']) {
   return async (response: Response) => {
+    if (format === 'raw') {
+      return response;
+    }
+
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
 
