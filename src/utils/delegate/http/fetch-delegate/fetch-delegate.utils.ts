@@ -1,5 +1,6 @@
-import type { HttpDelegate, HttpRequestOptions } from '../../../types';
-import type { CreateFetchDelegateOptions } from './types';
+import type { HttpDelegate, HttpRequestOptions } from '../../../../types';
+import { HttpError } from '../http-error/http-error.utils';
+import type { CreateFetchDelegateOptions } from '../types';
 
 function detectFormat(response: Response): HttpRequestOptions['format'] {
   const contentType = response.headers.get('Content-Type') ?? '';
@@ -26,20 +27,18 @@ function parseResponse(format: HttpRequestOptions['format']) {
     }
 
     if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-
+      let body: unknown = null;
       try {
-        const errorData = await response.clone().json();
-        if (errorData.error) {
-          errorMessage = errorData.error;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        }
+        body = await response.clone().json();
       } catch {
-        // keep the default error message
+        try {
+          body = await response.clone().text();
+        } catch {
+          body = null;
+        }
       }
 
-      throw new Error(errorMessage);
+      throw new HttpError(`HTTP ${response.status}: ${response.statusText}`, response.status, response.statusText, response.headers, body);
     }
 
     const resolved = format ?? detectFormat(response);

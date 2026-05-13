@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { HttpError } from '../http-error/http-error.utils';
 import { createFetchDelegate } from './fetch-delegate.utils';
 
 const mockFetch = mock();
@@ -47,13 +48,13 @@ describe('createFetchDelegate', () => {
       expect(options.headers).toEqual(headers);
     });
 
-    it('should throw error on failed request', async () => {
-      const mockResponse = new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
+    it('should throw HttpError on failed request', async () => {
+      const mockResponse = new Response(JSON.stringify({ error: 'Not found' }), { status: 404, statusText: 'Not Found' });
       mockFetch.mockResolvedValue(mockResponse);
 
       const delegate = createFetchDelegate({ baseURL });
 
-      await expect(delegate.get(url)).rejects.toThrow('Not found');
+      await expect(delegate.get(url)).rejects.toBeInstanceOf(HttpError);
     });
   });
 
@@ -91,13 +92,13 @@ describe('createFetchDelegate', () => {
       expect(options.headers).toEqual(headers);
     });
 
-    it('should throw error on failed request', async () => {
-      const mockResponse = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    it('should throw HttpError on failed request', async () => {
+      const mockResponse = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, statusText: 'Unauthorized' });
       mockFetch.mockResolvedValue(mockResponse);
 
       const delegate = createFetchDelegate({ baseURL });
 
-      await expect(delegate.delete(url)).rejects.toThrow('Unauthorized');
+      await expect(delegate.delete(url)).rejects.toBeInstanceOf(HttpError);
     });
   });
 
@@ -150,14 +151,14 @@ describe('createFetchDelegate', () => {
       expect(options.headers).toEqual(headers);
     });
 
-    it('should throw error on failed request', async () => {
-      const mockResponse = new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    it('should throw HttpError on failed request', async () => {
+      const mockResponse = new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, statusText: 'Forbidden' });
       mockFetch.mockResolvedValue(mockResponse);
 
       const delegate = createFetchDelegate({ baseURL });
       const testData = { name: 'John' };
 
-      await expect(delegate[method](url, testData)).rejects.toThrow('Forbidden');
+      await expect(delegate[method](url, testData)).rejects.toBeInstanceOf(HttpError);
     });
 
     it('should send FormData body without setting Content-Type', async () => {
@@ -219,44 +220,63 @@ describe('createFetchDelegate', () => {
   describe('Error handling (common)', () => {
     const baseURL = 'https://api.example.com';
 
-    describe('error message extraction', () => {
-      it.each([
-        { field: 'error', value: 'Custom error message', expected: 'Custom error message' },
-        { field: 'message', value: 'Validation failed', expected: 'Validation failed' },
-      ])('should extract error from errorData.$field', async ({ field, value, expected }) => {
-        const mockResponse = new Response(JSON.stringify({ [field]: value }), {
-          status: 400,
-          statusText: 'Bad Request',
+    describe('HttpError fields', () => {
+      it('should expose status, statusText, body and headers from a JSON error response', async () => {
+        const payload = { code: 'NOT_FOUND', message: 'User does not exist', details: { id: 42 } };
+        const mockResponse = new Response(JSON.stringify(payload), {
+          status: 404,
+          statusText: 'Not Found',
+          headers: { 'X-Request-Id': 'abc-123', 'Content-Type': 'application/json' },
         });
         mockFetch.mockResolvedValue(mockResponse);
 
         const delegate = createFetchDelegate({ baseURL });
+        const error = (await delegate.get('/users/42').catch((err) => err)) as HttpError;
 
-        await expect(delegate.get('/users')).rejects.toThrow(expected);
+        expect(error).toBeInstanceOf(HttpError);
+        expect(error).toBeInstanceOf(Error);
+        expect(error.name).toBe('HttpError');
+        expect(error.message).toBe('HTTP 404: Not Found');
+        expect(error.status).toBe(404);
+        expect(error.statusText).toBe('Not Found');
+        expect(error.body).toEqual(payload);
+        expect(error.headers.get('X-Request-Id')).toBe('abc-123');
       });
 
-      it('should fallback to default message when no error/message field', async () => {
-        const mockResponse = new Response(JSON.stringify({ some: 'data' }), {
-          status: 400,
-          statusText: 'Bad Request',
-        });
+      it('should expose the raw text on body when the response is not JSON', async () => {
+        const mockResponse = new Response('Plain text error', { status: 500, statusText: 'Internal Server Error' });
         mockFetch.mockResolvedValue(mockResponse);
 
         const delegate = createFetchDelegate({ baseURL });
+        const error = (await delegate.get('/users').catch((err) => err)) as HttpError;
 
-        await expect(delegate.get('/users')).rejects.toThrow('HTTP 400: Bad Request');
+        expect(error).toBeInstanceOf(HttpError);
+        expect(error.body).toBe('Plain text error');
       });
 
-      it('should prioritize error field over message field', async () => {
-        const mockResponse = new Response(JSON.stringify({ error: 'Error field', message: 'Message field' }), {
-          status: 400,
-          statusText: 'Bad Request',
+      it('should expose an empty body as empty string when the response has no payload', async () => {
+        const mockResponse = new Response('', { status: 500, statusText: 'Internal Server Error' });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const delegate = createFetchDelegate({ baseURL });
+        const error = (await delegate.get('/users').catch((err) => err)) as HttpError;
+
+        expect(error).toBeInstanceOf(HttpError);
+        expect(error.body).toBe('');
+      });
+
+      it('should preserve headers such as Retry-After for rate-limited responses', async () => {
+        const mockResponse = new Response(JSON.stringify({ error: 'Too many requests' }), {
+          status: 429,
+          statusText: 'Too Many Requests',
+          headers: { 'Retry-After': '120' },
         });
         mockFetch.mockResolvedValue(mockResponse);
 
         const delegate = createFetchDelegate({ baseURL });
+        const error = (await delegate.get('/users').catch((err) => err)) as HttpError;
 
-        await expect(delegate.get('/users')).rejects.toThrow('Error field');
+        expect(error.headers.get('Retry-After')).toBe('120');
       });
     });
 
@@ -304,7 +324,7 @@ describe('createFetchDelegate', () => {
     });
 
     describe('with different response formats', () => {
-      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'blob' as const }, { format: undefined }])('should throw error with format=$format', async ({ format }) => {
+      it.each([{ format: 'json' as const }, { format: 'text' as const }, { format: 'blob' as const }, { format: undefined }])('should throw HttpError with format=$format', async ({ format }) => {
         const mockResponse = new Response(JSON.stringify({ error: 'Server error' }), {
           status: 500,
           statusText: 'Internal Server Error',
@@ -312,8 +332,11 @@ describe('createFetchDelegate', () => {
         mockFetch.mockResolvedValue(mockResponse);
 
         const delegate = createFetchDelegate({ baseURL });
+        const error = (await delegate.get('/users', { format }).catch((err) => err)) as HttpError;
 
-        await expect(delegate.get('/users', { format })).rejects.toThrow('Server error');
+        expect(error).toBeInstanceOf(HttpError);
+        expect(error.status).toBe(500);
+        expect(error.body).toEqual({ error: 'Server error' });
       });
 
       it('should return the Response on HTTP error when format=raw', async () => {
