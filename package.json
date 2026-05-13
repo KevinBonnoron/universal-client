@@ -41,21 +41,20 @@
     "lint:fix": "bunx biome check --write",
     "format": "bunx biome format --write",
     "type-check": "tsc --noEmit",
-    "prepublishOnly": "bun run build",
-    "version:patch": "node scripts/version.js patch",
-    "version:minor": "node scripts/version.js minor",
-    "version:major": "node scripts/version.js major",
-    "version:alpha": "node scripts/version.js alpha",
-    "version:beta": "node scripts/version.js beta",
-    "version:rc": "node scripts/version.js rc"
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
     "@types/bun": "latest",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "eventsource": "^4.0.0",
     "lefthook": "^2.0.1",
+    "semantic-release": "^25.0.3",
     "tsup": "^8.5.0"
   },
   "peerDependencies": {
